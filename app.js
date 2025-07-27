@@ -365,9 +365,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateLocationUI() {
         locationDisplay.textContent = `${userLocation.city}, ${userLocation.state}`;
         zoneDisplay.textContent = `USDA Zone ${userLocation.zone}`;
-        if (userLocation.firstFrost) {
-            firstFrostDisplay.textContent = userLocation.firstFrost;
-        }
+
+        firstFrostDisplay.textContent = userLocation.firstFrost || 'N/A';
+
         zipInput.value = userLocation.zip || '';
     }
 
@@ -1248,12 +1248,23 @@ document.addEventListener('DOMContentLoaded', function() {
     saveLocationBtn.addEventListener('click', async () => {
         const zip = zipInput.value.trim();
         let locationInfo = zipData[zip];
-        if (!locationInfo) {
-            locationInfo = await lookupZip(zip);
-            if (locationInfo) {
-                zipData[zip] = locationInfo; // cache for session
+
+
+        // Always attempt a lookup if we have no cached frost date
+        if (!locationInfo || !locationInfo.firstFrost) {
+            const fetched = await lookupZip(zip);
+            if (fetched) {
+                locationInfo = fetched;
+                zipData[zip] = fetched; // cache for session
             }
         }
+
+        if (!locationInfo && zipData[zip]) {
+            // Fallback to cached info without frost date
+            locationInfo = { ...zipData[zip] };
+        }
+
+
         if (locationInfo) {
             userLocation = { zip, ...locationInfo };
             updateLocationUI();
