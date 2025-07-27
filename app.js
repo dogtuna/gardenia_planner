@@ -214,6 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const swapSuggestionsContainer = document.getElementById('swap-suggestions-container');
     const actionPlanFilters = document.getElementById('action-plan-filters');
     const seedsToOrderList = document.getElementById('seeds-to-order-list');
+    const downloadSeedsBtn = document.getElementById('download-seeds-btn');
     const bedTimelineControls = document.getElementById('bed-timeline-controls');
     const addPlantBtn = document.getElementById('add-plant-btn');
     const addBedBtn = document.getElementById('add-bed-btn');
@@ -912,6 +913,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function downloadSeedsList() {
+        if (seedsToOrder.length === 0) {
+            alert('No seeds to order.');
+            return;
+        }
+        const content = seedsToOrder.join('\n');
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'seeds-to-order.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
     function setupNavbar() {
         const sections = document.querySelectorAll('section');
         const navLinks = document.querySelectorAll('.nav-link');
@@ -1109,6 +1127,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     addBedBtn.addEventListener('click', () => {
         openBedForm();
+    });
+
+    downloadSeedsBtn.addEventListener('click', () => {
+        downloadSeedsList();
     });
 
     bedForm.addEventListener('submit', (e) => {
