@@ -1,0 +1,933 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Fall Garden Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Terracotta & Sage -->
+    <!-- Application Structure Plan: The SPA is designed as a task-oriented dashboard, not a linear report. It prioritizes what the user needs to know and do. The structure flows from high-level summary (Dashboard) to time-based tasks (Timeline), detailed information (Plant Library), spatial planning (Bed Layouts), and finally a comprehensive checklist (Action Plan). This non-linear structure allows users to jump to the section most relevant to their immediate question (e.g., "What do I plant in this specific bed?") without reading through everything. Key interactions like filtering the plant library from the timeline create a cohesive, guided experience, making the complex plan easy to digest for a first-time fall gardener. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Climate data (Zone, Frost). Goal: Inform. Viz: Key stat cards. Interaction: Static. Justification: Quick, high-level context. Library/Method: HTML/Tailwind.
+        - Report Info: Planting windows from Table 1. Goal: Show change/schedule. Viz: Interactive timeline/calendar view. Interaction: Click a month/period to filter the Plant Library. Justification: More intuitive than a table for understanding seasonal flow. Library/Method: HTML/JS.
+        - Report Info: Detailed plant data from Table 1. Goal: Organize/Inform. Viz: Grid of filterable cards. Interaction: Clicking a card reveals a modal with details (spacing, maturity, notes). Justification: Manages complexity via progressive disclosure. Library/Method: HTML/JS.
+        - Report Info: Bed-by-bed planting layouts. Goal: Organize spatially. Viz: Interactive visual grid for each bed. Interaction: Hovering over a square reveals a tooltip with plant info. Justification: A direct, visual representation of the physical garden is the most user-friendly way to present this data. Library/Method: HTML/Tailwind Grid/JS.
+        - Report Info: Step-by-step action plan. Goal: Inform/Guide. Viz: Collapsible accordion sections. Interaction: Click to expand/collapse phases. Justification: Prevents information overload by hiding details until requested. Library/Method: HTML/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8; /* Warm Neutral Background */
+            color: #4A4A4A;
+        }
+        .bg-primary { background-color: #FDFBF8; }
+        .bg-secondary { background-color: #F5F1E9; }
+        .bg-accent { background-color: #D4A373; } /* Terracotta */
+        .text-accent { color: #D4A373; }
+        .border-accent { border-color: #D4A373; }
+        .bg-green-accent { background-color: #A3B18A; } /* Sage */
+        .text-green-accent { color: #A3B18A; }
+        .border-green-accent { border-color: #A3B18A; }
+        .bg-blue-accent { background-color: #A9BCD0; } /* Cool Blue */
+        .text-blue-accent { color: #A9BCD0; }
+        .border-blue-accent { border-color: #A9BCD0; }
+        .bg-yellow-accent { background-color: #FDECB3; } /* Soft Yellow */
+        .text-yellow-accent { color: #DAA520; }
+        .border-yellow-accent { border-color: #FDECB3; }
+        
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: #A3B18A;
+            color: white;
+        }
+        .plant-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .plant-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .garden-bed-grid {
+            display: grid;
+            gap: 4px;
+        }
+        .garden-square {
+            aspect-ratio: 1 / 1;
+            transition: background-color 0.2s ease;
+            position: relative;
+        }
+        .garden-square:hover {
+            filter: brightness(1.1);
+        }
+        .tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        .garden-square:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+    </style>
+</head>
+<body class="bg-primary">
+
+    <header class="bg-secondary sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center">
+            <h1 class="text-2xl font-bold text-green-accent mb-2 sm:mb-0">My Fall Garden Plan</h1>
+            <nav id="navbar" class="flex flex-wrap justify-center gap-2">
+                <a href="#dashboard" class="nav-link active">Dashboard</a>
+                <a href="#timeline" class="nav-link">Timeline</a>
+                <a href="#layouts" class="nav-link">Bed Layouts</a>
+                <a href="#plants" class="nav-link">Plant Library</a>
+                <a href="#swaps" class="nav-link">Possible Swaps</a>
+                <a href="#plan" class="nav-link">Action Plan</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <section id="dashboard" class="mb-12 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-6 text-center">Gardening Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                    <h3 class="font-semibold text-lg mb-2">Location</h3>
+                    <p class="text-2xl text-accent">Montgomery, TX</p>
+                    <p class="text-gray-500">USDA Zone 9a</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                    <h3 class="font-semibold text-lg mb-2">First Frost</h3>
+                    <p class="text-2xl text-blue-accent">Dec 1 - 10</p>
+                    <p class="text-gray-500">Average Date</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                    <h3 class="font-semibold text-lg mb-2">Total Growing Space</h3>
+                    <p class="text-2xl text-green-accent">60 sq ft</p>
+                    <p class="text-gray-500">Across 7 Raised Beds</p>
+                </div>
+            </div>
+            <div class="mt-8 bg-yellow-accent bg-opacity-20 border-l-4 border-yellow-accent text-yellow-accent p-4 rounded-r-lg" role="alert">
+                <p class="font-bold">What to Do Now (Late July - Mid August)</p>
+                <p>Focus on immediate soil preparation for all beds. Direct sow heat-tolerant crops like Zucchini, Cucumbers, and Bush Beans. Start tender Tomato and Pepper seeds indoors as a gamble, or purchase transplants for a better chance of success.</p>
+            </div>
+        </section>
+
+        <section id="timeline" class="mb-12 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Planting Timeline</h2>
+            <p class="text-center text-gray-600 mb-6">This chart shows the planting window and estimated time to first harvest for your crops. Click a month to filter the Plant Library below.</p>
+            <div class="chart-container">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </section>
+
+        <section id="layouts" class="mb-12 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Interactive Bed Layouts</h2>
+            <p class="text-center text-gray-600 mb-6">Visualize your garden. Hover over a square to see what's planted. Use the buttons to switch between bed types.</p>
+            <div class="flex justify-center flex-wrap gap-2 mb-6" id="bed-type-selector"></div>
+            <div id="bed-layout-container"></div>
+        </section>
+
+        <section id="plants" class="mb-12 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Plant Library</h2>
+            <p class="text-center text-gray-600 mb-6">Explore your available seeds. Click any card for detailed planting info. The list is filtered by the timeline above.</p>
+            <div class="flex justify-center mb-4">
+                <button id="reset-filter-btn" class="bg-accent text-white px-4 py-2 rounded-full hover:bg-opacity-80 transition">Show All Plants</button>
+            </div>
+            <div id="plant-library" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+        </section>
+
+        <section id="swaps" class="mb-12 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Possible Swaps for High-Risk Plants</h2>
+            <p class="text-center text-gray-600 mb-6">These plants are a "gamble" for a successful harvest starting July 27th. Consider swapping them for more timely and reliable fall crops. Click "Apply Swap" to update your plan.</p>
+            <div id="swap-suggestions-container" class="space-y-6 max-w-4xl mx-auto"></div>
+        </section>
+
+        <section id="plan" class="mb-12 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Step-by-Step Action Plan</h2>
+            <p class="text-center text-gray-600 mb-6">Your detailed guide from soil prep to final harvest. Click each phase to expand.</p>
+            <div id="action-plan-container" class="space-y-4 max-w-4xl mx-auto"></div>
+        </section>
+    </main>
+
+    <div id="plantModal" class="modal" onclick="closeModal()">
+        <div class="modal-content bg-white p-8 rounded-lg shadow-2xl w-11/12 md:w-2/3 lg:w-1/2 max-w-2xl" onclick="event.stopPropagation()">
+            <div id="modal-body" class="space-y-4"></div>
+            <button onclick="closeModal()" class="mt-6 w-full bg-accent text-white px-4 py-2 rounded-full hover:bg-opacity-80 transition">Close</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            let plantData = [
+                { name: 'Jelly Bean Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Big Boy Hybrid Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '78 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Vigorous vining, needs tall trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Peppermint San Marzano Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Large Cherry Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '50-60 (from transplant)', notes: 'Fastest maturing tomato, best chance from seed if started immediately indoors. Transplants still better. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Greek Oregano', viability: 'Good', method: 'Direct Sow / Transplant', window: 'Jul-Aug', spacing: 1, maturity: 'N/A (Perennial)', notes: 'Benefits from afternoon shade in hot climates. Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Cosmos', viability: 'Plant Later', method: 'Direct Sow / Transplant', window: 'Sep-Oct', spacing: '12-18" apart', maturity: 'N/A (Flower)', notes: 'Plant later in the fall. Attracts pollinators.', type: 'Flower', emoji: '🌸', plantingMonth: 9, seedsToStart: '10-15' },
+                { name: 'Strawflower', viability: 'Plant Later', method: 'Direct Sow / Transplant', window: 'Mid-Oct', spacing: '6-12" apart', maturity: 'N/A (Flower)', notes: 'Tolerates temperatures down to 10°F. Plant later in the fall.', type: 'Flower', emoji: '🌼', plantingMonth: 10, seedsToStart: '10-15' },
+                { name: 'Black Elderberry', viability: 'Good', method: 'Direct Sow / Transplant', window: 'Jul-Aug', spacing: '4ft apart', maturity: 'N/A (Perennial)', notes: 'Large shrub, best for long-term establishment. Full sun for optimum production.', type: 'Other', emoji: '🌳', plantingMonth: 7, seedsToStart: '2-3' },
+                { name: 'Blue Milkweed', viability: 'Winter Project', method: 'Direct Sow', window: 'Dec (After frost)', spacing: 'N/A', maturity: 'N/A (Perennial)', notes: 'Requires cold stratification; plant after first frost for spring germination.', type: 'Other', emoji: '🦋', plantingMonth: 12, seedsToStart: '10-15' },
+                { name: 'Butternut Squash', viability: 'Gamble', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '85-110', notes: 'Very late start for full maturity before frost. Needs strong trellis. Frost susceptible.', type: 'Squash', emoji: '🎃', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Pickling Cucumber', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 2, maturity: '45-53', notes: 'Excellent for immediate planting. Needs trellis. Frost susceptible.', type: 'Cucumber', emoji: '🥒', plantingMonth: 7, seedsToStart: '5-7' },
+                { name: 'Marigolds', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 4, maturity: 'N/A (Flower)', notes: 'Excellent companion plant, repels pests.', type: 'Flower', emoji: '🌻', plantingMonth: 7, seedsToStart: '15-20' },
+                { name: 'Ranunculus', viability: 'Winter Project', method: 'Plant Corms', window: 'Mid-Nov', spacing: '8-9" apart', maturity: 'N/A (Flower)', notes: 'Requires pre-sprouting corms. Plant later in the fall. Protect from freezes.', type: 'Flower', emoji: '🌷', plantingMonth: 11, seedsToStart: 'N/A (Corms)' },
+                { name: 'Little Gem Lettuce', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 4, maturity: 'N/A (Cool season)', notes: 'Best for fall. Can succession plant. Frost tolerant.', type: 'Greens', emoji: '🥬', plantingMonth: 8, seedsToStart: '15-20' },
+                { name: 'Armenian Cucumber', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 2, maturity: '60-75', notes: 'Excellent for immediate planting. Needs trellis. Frost susceptible.', type: 'Cucumber', emoji: '🥒', plantingMonth: 7, seedsToStart: '5-7' },
+                { name: 'Cocozelle Zucchini', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '55', notes: 'Excellent for immediate planting. Needs trellis. Frost susceptible.', type: 'Squash', emoji: '🥒', plantingMonth: 7, seedsToStart: '5-7' },
+                { name: 'Long Purple Eggplant', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '80', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Other', emoji: '🍆', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Baby Leaf Spinach', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 9, maturity: 'N/A (Cool season)', notes: 'Excellent for fall. Frost tolerant. Needs dark to germinate.', type: 'Greens', emoji: '🍃', plantingMonth: 8, seedsToStart: '20-25' },
+                { name: 'Bloomsdale Spinach', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 9, maturity: 'N/A (Cool season)', notes: 'Excellent for fall. Frost tolerant. Needs dark to germinate.', type: 'Greens', emoji: '🍃', plantingMonth: 8, seedsToStart: '10-15' },
+                { name: 'Roma II Beans', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 9, maturity: '55-60', notes: 'Excellent for immediate planting. Bush type. Frost susceptible.', type: 'Bean', emoji: '🫘', plantingMonth: 7, seedsToStart: '20-25' },
+                { name: 'Blue Lake 156 Beans', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 9, maturity: '55', notes: 'Excellent for immediate planting. Bush type. Frost susceptible.', type: 'Bean', emoji: '🫘', plantingMonth: 7, seedsToStart: '20-25' },
+                { name: 'Sugar Snap Peas', viability: 'Plant Later', method: 'Direct Sow', window: 'Mid-Sep-Oct', spacing: 9, maturity: '60-80', notes: 'Plant later in the fall. Needs trellis. Frost tolerant.', type: 'Pea', emoji: '🫛', plantingMonth: 9, seedsToStart: '40-50' },
+                { name: 'French Dressing Radishes', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Oct-Early Nov', spacing: 16, maturity: '25-35', notes: 'Very fast. Ideal for succession planting later in fall. Cool season.', type: 'Root', emoji: '🌶️', plantingMonth: 10, seedsToStart: '20-25' },
+                { name: 'Cherry Belle Radishes', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Oct-Early Nov', spacing: 16, maturity: '22-25', notes: 'Very fast. Ideal for succession planting later in fall. Cool season.', type: 'Root', emoji: '🌶️', plantingMonth: 10, seedsToStart: '20-25' },
+                { name: 'Carnival Blend Carrots', viability: 'Plant Later', method: 'Direct Sow', window: 'Mid-Sep', spacing: 16, maturity: '65-75', notes: 'Direct sow only. Plant later in the fall. Cool season.', type: 'Root', emoji: '🥕', plantingMonth: 9, seedsToStart: '40-50' },
+                { name: 'Broad Leaf Sage', viability: 'Plant Later', method: 'Direct Sow (Difficult) / Purchase Transplants', window: 'Early Oct', spacing: 1, maturity: 'N/A (Perennial)', notes: 'Best from transplants. Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '3-5' },
+                { name: 'Genovese Basil', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 4, maturity: 'N/A (Annual herb)', notes: 'Zero frost tolerance. Good for immediate planting.', type: 'Herb', emoji: '🌿', plantingMonth: 7, seedsToStart: '20-25' },
+                { name: 'Cilantro', viability: 'Plant Later', method: 'Direct Sow', window: 'Sep', spacing: 9, maturity: '45-70', notes: 'Cool season. Plant later in the fall. Tolerates down to 10°F.', type: 'Herb', emoji: '🌿', plantingMonth: 9, seedsToStart: '20-25' },
+                { name: 'Fernleaf Dill', viability: 'Plant Later', method: 'Direct Sow', window: 'Early Oct', spacing: 1, maturity: 'N/A (Annual herb)', notes: 'Loves mild weather. Plant later in the fall.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '3-5' },
+                { name: 'Cayenne Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70-75 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🌶️', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Santa Fe Grande Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🌶️', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Cal Wonder Bell Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '60-80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🫑', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Jalapeno Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70-80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🌶️', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Chives', viability: 'Plant Later', method: 'Direct Sow', window: 'Early Oct', spacing: 16, maturity: 'N/A (Perennial)', notes: 'Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '35-45' },
+                { name: 'Warrior Onion', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 16, maturity: '60 (from direct seed)', notes: 'Cool season. Can stand freezing.', type: 'Root', emoji: '🧅', plantingMonth: 8, seedsToStart: '50-60' },
+                { name: 'Sugar Baby Watermelon', viability: 'Gamble', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '70-80', notes: 'Needs strong trellis and vine management. Frost susceptible.', type: 'Other', emoji: '🍉', plantingMonth: 7, seedsToStart: '3-5' },
+            ];
+
+            const bedLayouts = {
+                '4x2': [
+                    { name: 'Bed 1: Warm Season', grid: 'grid-cols-4', squares: [
+                        { plant: 'Cocozelle Zucchini', count: 1, month: 7 }, { plant: 'Armenian Cucumber', count: 1, month: 7 }, { plant: 'Pickling Cucumber', count: 1, month: 7 }, { plant: 'Sugar Baby Watermelon', count: 1, month: 7 },
+                        { plant: 'Roma II Beans', count: 9, month: 7 }, { plant: 'Blue Lake 156 Beans', count: 9, month: 7 }, { plant: 'Genovese Basil', count: 4, month: 7 }, { plant: 'Marigolds', count: 4, month: 7 }
+                    ]},
+                    { name: 'Bed 2: Cool Season', grid: 'grid-cols-4', squares: [
+                        { plant: 'Baby Leaf Spinach', count: 9, month: 8 }, { plant: 'Bloomsdale Spinach', count: 9, month: 8 }, { plant: 'Little Gem Lettuce', count: 4, month: 8 }, { plant: 'Little Gem Lettuce', count: 4, month: 8 },
+                        { plant: 'Carnival Blend Carrots', count: 16, month: 9 }, { plant: 'Carnival Blend Carrots', count: 16, month: 9 }, { plant: 'French Dressing Radishes', count: 16, month: 10 }, { plant: 'Cherry Belle Radishes', count: 16, month: 10 }
+                    ]},
+                    { name: 'Bed 3: Herbs & Onions', grid: 'grid-cols-4', squares: [
+                        { plant: 'Greek Oregano', count: 1, month: 7 }, { plant: 'Broad Leaf Sage', count: 1, month: 10 }, { plant: 'Fernleaf Dill', count: 1, month: 10 }, { plant: 'Chives', count: 16, month: 10 },
+                        { plant: 'Cilantro', count: 9, month: 9 }, { plant: 'Cilantro', count: 9, month: 9 }, { plant: 'Warrior Onion', count: 16, month: 8 }, { plant: 'Warrior Onion', count: 16, month: 8 }
+                    ]},
+                    { name: 'Bed 4: Tomato/Pepper Gamble', grid: 'grid-cols-4', squares: [
+                        { plant: 'Jelly Bean Tomatoes', count: 1, month: 7 }, { plant: 'Big Boy Hybrid Tomatoes', count: 1, month: 7 }, { plant: 'Cayenne Pepper', count: 1, month: 7 }, { plant: 'Jalapeno Pepper', count: 1, month: 7 },
+                        { plant: 'Santa Fe Grande Pepper', count: 1, month: 7 }, { plant: 'Cal Wonder Bell Pepper', count: 1, month: 7 }, { plant: 'Marigolds', count: 4, month: 7 }, { plant: 'Genovese Basil', count: 4, month: 7 }
+                    ]}
+                ],
+                '8x1': [
+                    { name: 'Bed 1: Vining Crops', grid: 'grid-cols-8', squares: [
+                        { plant: 'Pickling Cucumber', count: 1, month: 7 }, { plant: 'Armenian Cucumber', count: 1, month: 7 }, { plant: 'Sugar Snap Peas', count: 9, month: 9 }, { plant: 'Sugar Snap Peas', count: 9, month: 9 },
+                        { plant: 'Sugar Snap Peas', count: 9, month: 9 }, { plant: 'Sugar Snap Peas', count: 9, month: 9 }, { plant: 'Sugar Baby Watermelon', count: 1, month: 7 }, { plant: 'Cocozelle Zucchini', count: 1, month: 7 }
+                    ]},
+                    { name: 'Bed 2: Herb & Green Row', grid: 'grid-cols-8', squares: [
+                        { plant: 'Greek Oregano', count: 1, month: 7 }, { plant: 'Broad Leaf Sage', count: 1, month: 10 }, { plant: 'Genovese Basil', count: 4, month: 7 }, { plant: 'Cilantro', count: 9, month: 9 },
+                        { plant: 'Cilantro', count: 9, month: 9 }, { plant: 'Fernleaf Dill', count: 1, month: 10 }, { plant: 'Chives', count: 16, month: 10 }, { plant: 'Warrior Onion', count: 16, month: 8 }
+                    ]}
+                ],
+                '6x2': [
+                    { name: 'Bed 1: Mixed Production', grid: 'grid-cols-6', squares: [
+                        { plant: 'Peppermint San Marzano Tomatoes', count: 1, month: 7 }, { plant: 'Large Cherry Tomatoes', count: 1, month: 7 }, { plant: 'Pickling Cucumber', count: 1, month: 7 }, { plant: 'Armenian Cucumber', count: 1, month: 7 }, { plant: 'Cocozelle Zucchini', count: 1, month: 7 }, { plant: 'Black Elderberry', count: 1, month: 7 },
+                        { plant: 'Roma II Beans', count: 9, month: 7 }, { plant: 'Blue Lake 156 Beans', count: 9, month: 7 }, { plant: 'Little Gem Lettuce', count: 4, month: 8 }, { plant: 'Baby Leaf Spinach', count: 9, month: 8 }, { plant: 'Marigolds', count: 4, month: 7 }, { plant: 'Genovese Basil', count: 4, month: 7 }
+                    ]}
+                ]
+            };
+
+            const swapSuggestions = [
+                // 4x2 Bed 4 (Tomato/Pepper Gamble)
+                {
+                    originalPlantName: 'Jelly Bean Tomatoes',
+                    bedType: '4x2',
+                    bedName: 'Bed 4: Tomato/Pepper Gamble',
+                    squareRow: 'A',
+                    squareCol: 1,
+                    swapOptions: [
+                        { name: 'Broccoli Raab', emoji: '🥦', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Fast-growing, cool-season leafy green. Good companion to basil and marigolds.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' },
+                        { name: 'Swiss Chard', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Hardy, colorful, continuous harvest. Tolerates some heat and cold.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' }
+                    ]
+                },
+                {
+                    originalPlantName: 'Big Boy Hybrid Tomatoes',
+                    bedType: '4x2',
+                    bedName: 'Bed 4: Tomato/Pepper Gamble',
+                    squareRow: 'A',
+                    squareCol: 2,
+                    swapOptions: [
+                        { name: 'Tatsoi', emoji: '🍃', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Quick-growing, very cold hardy Asian green. Good for cut-and-come-again.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' },
+                        { name: 'Bok Choy', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Quick-growing Asian green, good for fall. Plant in Sep.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' }
+                    ]
+                },
+                {
+                    originalPlantName: 'Cayenne Pepper',
+                    bedType: '4x2',
+                    bedName: 'Bed 4: Tomato/Pepper Gamble',
+                    squareRow: 'A',
+                    squareCol: 3,
+                    swapOptions: [
+                        { name: 'Mustard Greens', emoji: '🍃', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Quick, spicy, very cold tolerant. Good for fall greens.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' },
+                        { name: 'Kale (Dwarf)', emoji: '🥬', sfgSpacing: 1, plantingMonth: 9, viability: 'Excellent', notes: 'Very hardy, continuous harvest throughout fall and winter.', type: 'Greens', method: 'Direct Sow', seedsToStart: '3-5' }
+                    ]
+                },
+                {
+                    originalPlantName: 'Jalapeno Pepper',
+                    bedType: '4x2',
+                    bedName: 'Bed 4: Tomato/Pepper Gamble',
+                    squareRow: 'A',
+                    squareCol: 4,
+                    swapOptions: [
+                        { name: 'Arugula', emoji: '🌿', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Fast-growing, peppery green. Tolerates light frost.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' },
+                        { name: 'Spinach (Extra)', emoji: '🍃', sfgSpacing: 9, plantingMonth: 8, viability: 'Excellent', notes: 'More of your existing spinach. Reliable cool-season crop.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' }
+                    ]
+                },
+                {
+                    originalPlantName: 'Santa Fe Grande Pepper',
+                    bedType: '4x2',
+                    bedName: 'Bed 4: Tomato/Pepper Gamble',
+                    squareRow: 'B',
+                    squareCol: 1,
+                    swapOptions: [
+                        { name: 'Radishes (Extra)', emoji: '🌶️', sfgSpacing: 16, plantingMonth: 10, viability: 'Excellent', notes: 'More of your existing radishes. Very fast, good for succession.', type: 'Root', method: 'Direct Sow', seedsToStart: '20-25' },
+                        { name: 'Carrots (Extra)', emoji: '🥕', sfgSpacing: 16, plantingMonth: 9, viability: 'Excellent', notes: 'More of your existing carrots. Reliable cool-season root crop.', type: 'Root', method: 'Direct Sow', seedsToStart: '40-50' }
+                    ]
+                },
+                {
+                    originalPlantName: 'Cal Wonder Bell Pepper',
+                    bedType: '4x2',
+                    bedName: 'Bed 4: Tomato/Pepper Gamble',
+                    squareRow: 'B',
+                    squareCol: 2,
+                    swapOptions: [
+                        { name: 'Lettuce (Extra)', emoji: '🥬', sfgSpacing: 4, plantingMonth: 8, viability: 'Excellent', notes: 'More of your existing lettuce. Good for fall greens.', type: 'Greens', method: 'Direct Sow', seedsToStart: '15-20' },
+                        { name: 'Cilantro (Extra)', emoji: '🌿', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'More of your existing cilantro. Cool-season herb.', type: 'Herb', method: 'Direct Sow', seedsToStart: '20-25' }
+                    ]
+                },
+                // 4x2 Bed 1 (Warm Season)
+                {
+                    originalPlantName: 'Butternut Squash',
+                    bedType: '4x2',
+                    bedName: 'Bed 1: Warm Season',
+                    squareRow: 'A',
+                    squareCol: 1,
+                    swapOptions: [
+                        { name: 'Bush Beans (Green)', emoji: '🫘', sfgSpacing: 9, plantingMonth: 7, viability: 'Good', notes: 'Reliable, nitrogen fixer. Good for succession planting.', type: 'Bean', method: 'Direct Sow', seedsToStart: '20-25' },
+                        { name: 'Pickling Cucumber (Extra)', emoji: '🥒', sfgSpacing: 2, plantingMonth: 7, viability: 'Good', notes: 'Extend your cucumber harvest. Needs trellis.', type: 'Cucumber', method: 'Direct Sow', seedsToStart: '5-7' }
+                    ]
+                },
+                {
+                    originalPlantName: 'Sugar Baby Watermelon',
+                    bedType: '4x2',
+                    bedName: 'Bed 1: Warm Season',
+                    squareRow: 'A',
+                    squareCol: 4,
+                    swapOptions: [
+                        { name: 'Malabar Spinach', emoji: '🌿', sfgSpacing: 1, plantingMonth: 7, viability: 'Good', notes: 'Heat-tolerant vining green. Needs trellis.', type: 'Greens', method: 'Direct Sow', seedsToStart: '3-5' },
+                        { name: 'Sugar Snap Peas (Extra)', emoji: '🫛', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Reliable cool-season vining crop. Nitrogen fixer. Plant in Sep.', type: 'Pea', method: 'Direct Sow', seedsToStart: '40-50' }
+                    ]
+                },
+                // 8x1 Bed 1 (Vining Crops)
+                {
+                    originalPlantName: 'Sugar Baby Watermelon',
+                    bedType: '8x1',
+                    bedName: 'Bed 1: Vining Crops',
+                    squareRow: 'A', 
+                    squareCol: 7,
+                    swapOptions: [
+                        { name: 'Malabar Spinach', emoji: '🌿', sfgSpacing: 1, plantingMonth: 7, viability: 'Good', notes: 'Heat-tolerant vining green. Needs trellis.', type: 'Greens', method: 'Direct Sow', seedsToStart: '3-5' },
+                        { name: 'Armenian Cucumber (Extra)', emoji: '🥒', sfgSpacing: 2, plantingMonth: 7, viability: 'Good', notes: 'Reliable vining cucumber. Needs trellis.', type: 'Cucumber', method: 'Direct Sow', seedsToStart: '5-7' }
+                    ]
+                },
+                // 6x2 Bed 1 (Mixed Production)
+                {
+                    originalPlantName: 'Peppermint San Marzano Tomatoes',
+                    bedType: '6x2',
+                    bedName: 'Bed 1: Mixed Production',
+                    squareRow: 'A',
+                    squareCol: 1,
+                    swapOptions: [
+                        { name: 'Swiss Chard', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Hardy, colorful, continuous harvest. Tolerates some heat and cold.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' },
+                        { name: 'Bok Choy', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Quick-growing Asian green, good for fall. Plant in Sep.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' }
+                    ]
+                },
+                {
+                    originalPlantName: 'Large Cherry Tomatoes',
+                    bedType: '6x2',
+                    bedName: 'Bed 1: Mixed Production',
+                    squareRow: 'A',
+                    squareCol: 2,
+                    swapOptions: [
+                        { name: 'Broccoli Raab', emoji: '🥦', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Fast-growing, cool-season leafy green. Good companion to basil and marigolds.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' },
+                        { name: 'Mustard Greens', emoji: '🍃', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Quick, spicy, very cold tolerant. Good for fall greens.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' }
+                    ]
+                }
+            ];
+
+            const plantLibraryContainer = document.getElementById('plant-library');
+            const modal = document.getElementById('plantModal');
+            const modalBody = document.getElementById('modal-body');
+            const bedTypeSelector = document.getElementById('bed-type-selector');
+            const bedLayoutContainer = document.getElementById('bed-layout-container');
+            const actionPlanContainer = document.getElementById('action-plan-container');
+            const resetFilterBtn = document.getElementById('reset-filter-btn');
+            const swapSuggestionsContainer = document.getElementById('swap-suggestions-container');
+
+            const viabilityClasses = {
+                'Good': 'border-green-accent',
+                'Excellent': 'border-green-accent', // Added for new suggestions
+                'Gamble': 'border-yellow-accent',
+                'Plant Later': 'border-blue-accent',
+                'Winter Project': 'border-gray-400'
+            };
+
+            const monthColors = {
+                7: 'bg-red-200',
+                8: 'bg-orange-200',
+                9: 'bg-yellow-200',
+                10: 'bg-green-200',
+                11: 'bg-blue-200',
+                12: 'bg-purple-200',
+            };
+
+            function renderPlantLibrary(filterFn = () => true) {
+                plantLibraryContainer.innerHTML = '';
+                // Sort plantData alphabetically for consistent display
+                const sortedPlantData = [...plantData].sort((a, b) => a.name.localeCompare(b.name));
+                sortedPlantData.filter(filterFn).forEach(plant => {
+                    const card = document.createElement('div');
+                    card.className = `plant-card bg-white p-4 rounded-lg shadow-md cursor-pointer border-l-4 ${viabilityClasses[plant.viability] || 'border-gray-300'}`;
+                    card.innerHTML = `
+                        <div class="text-3xl mb-2">${plant.emoji}</div>
+                        <h4 class="font-semibold">${plant.name}</h4>
+                        <p class="text-sm text-gray-500">${plant.viability}</p>
+                    `;
+                    card.onclick = () => openModal(plant);
+                    plantLibraryContainer.appendChild(card);
+                });
+            }
+
+            window.openModal = function(plant) {
+                modalBody.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="text-5xl">${plant.emoji}</div>
+                        <div>
+                            <h3 class="text-2xl font-bold">${plant.name}</h3>
+                            <p class="text-lg ${viabilityClasses[plant.viability].replace('border', 'text')} font-semibold">${plant.viability}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mt-4 text-center">
+                        <div class="bg-secondary p-3 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Spacing</p>
+                            <p class="text-lg font-semibold">${plant.spacing} / sq ft</p>
+                        </div>
+                        <div class="bg-secondary p-3 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Maturity</p>
+                            <p class="text-lg font-semibold">${plant.maturity} days</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mt-4">Planting Window:</h4>
+                        <p>${plant.window}</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mt-2">Method:</h4>
+                        <p>${plant.method}</p>
+                    </div>
+                    ${plant.seedsToStart ? `
+                    <div>
+                        <h4 class="font-semibold mt-2">Seeds to Start:</h4>
+                        <p>${plant.seedsToStart} seeds</p>
+                    </div>
+                    ` : ''}
+                    <div>
+                        <h4 class="font-semibold mt-2">Notes:</h4>
+                        <p>${plant.notes}</p>
+                    </div>
+                `;
+                modal.style.display = 'flex';
+            }
+
+            window.closeModal = function() {
+                modal.style.display = 'none';
+            }
+
+            function renderBedLayouts(bedType) {
+                bedLayoutContainer.innerHTML = '';
+                const beds = bedLayouts[bedType];
+                beds.forEach(bed => {
+                    const bedDiv = document.createElement('div');
+                    bedDiv.className = 'mb-8';
+                    bedDiv.innerHTML = `<h3 class="text-xl font-semibold mb-3 text-center">${bed.name} (${bedType})</h3>`;
+                    
+                    const gridContainer = document.createElement('div');
+                    gridContainer.className = `garden-bed-grid ${bed.grid} max-w-md mx-auto bg-gray-200 p-1 rounded-md`;
+                    
+                    bed.squares.forEach(square => {
+                        const plantInfo = plantData.find(p => p.name === square.plant);
+                        const viabilityClass = plantInfo ? viabilityClasses[plantInfo.viability] : 'border-gray-300';
+                        const squareDiv = document.createElement('div');
+                        squareDiv.className = `garden-square ${monthColors[square.month]} rounded flex items-center justify-center text-xs text-center p-1 border-l-4 ${viabilityClass}`;
+                        squareDiv.innerHTML = `
+                            <span>${square.plant.split(' ')[0]}</span>
+                            <div class="tooltip bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                                ${square.plant}<br>(${square.count}/sq ft)
+                            </div>
+                        `;
+                        gridContainer.appendChild(squareDiv);
+                    });
+                    
+                    bedDiv.appendChild(gridContainer);
+                    bedLayoutContainer.appendChild(bedDiv);
+                });
+            }
+
+            function setupBedSelectors() {
+                bedTypeSelector.innerHTML = ''; // Clear existing buttons
+                Object.keys(bedLayouts).forEach((type, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'px-4 py-2 rounded-full transition';
+                    button.textContent = `Show ${type} Beds`;
+                    if (index === 0) {
+                        button.classList.add('bg-green-accent', 'text-white');
+                    } else {
+                        button.classList.add('bg-secondary');
+                    }
+                    button.onclick = () => {
+                        document.querySelectorAll('#bed-type-selector button').forEach(btn => {
+                            btn.classList.remove('bg-green-accent', 'text-white');
+                            btn.classList.add('bg-secondary');
+                        });
+                        button.classList.add('bg-green-accent', 'text-white');
+                        button.classList.remove('bg-secondary');
+                        renderBedLayouts(type);
+                    };
+                    bedTypeSelector.appendChild(button);
+                });
+            }
+
+            function generatePhaseContent(phase) {
+                let contentHtml = '<ul class="list-disc pl-5 space-y-2">';
+                let plantsForPhase = [];
+
+                if (phase === 1) { // Late July - Mid-August
+                    plantsForPhase = plantData.filter(p => p.plantingMonth === 7 && (p.method.includes('Direct Sow') || p.method.includes('Start Indoors')));
+                    contentHtml += `
+                        <li><strong>Soil Preparation (All Beds):</strong> Immediately clear all beds of old plants and weeds. Amend soil with 1-2 inches of sand and 2-3 inches of compost. Mix in a slow-release fertilizer (2-3 lbs per 100 sq ft). Water deeply for two hours and let dry for a few days.</li>
+                        <li><strong>Warm-Season Seed Starting (Indoors - High Risk/Gamble):</strong> Start the following seeds indoors immediately on a heat mat (70-85°F). Note: Purchasing transplants is highly recommended for a better fall harvest.
+                            <ul class="list-circle pl-5 mt-2">
+                    `;
+                    plantsForPhase.filter(p => p.method.includes('Start Indoors')).forEach(plant => {
+                        contentHtml += `<li>${plant.name}: Start ${plant.seedsToStart} seeds</li>`;
+                    });
+                    contentHtml += `</ul></li>`;
+                    contentHtml += `
+                        <li><strong>Immediate Direct Sowing (Outdoors):</strong> Plant seeds for the following:
+                            <ul class="list-circle pl-5 mt-2">
+                    `;
+                    plantsForPhase.filter(p => p.method.includes('Direct Sow')).forEach(plant => {
+                        contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds</li>`;
+                    });
+                    contentHtml += `
+                            </ul>
+                        </li>
+                        <li><strong>Initial Care:</strong> Water all new plantings thoroughly. Once seedlings emerge, thin them to the correct spacing. Apply a 2-3 inch layer of mulch to retain moisture and suppress weeds. Begin daily pest checks.</li>
+                    `;
+                } else if (phase === 2) { // Late August - September
+                    plantsForPhase = plantData.filter(p => (p.plantingMonth === 8 || p.plantingMonth === 9 || p.plantingMonth === 10) && p.method.includes('Direct Sow'));
+                    contentHtml += `<li><strong>Late August - Mid-September Sowing:</strong> Direct sow the following:
+                            <ul class="list-circle pl-5 mt-2">
+                    `;
+                    plantsForPhase.filter(p => p.plantingMonth === 8 || p.plantingMonth === 9).forEach(plant => {
+                        contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds</li>`;
+                    });
+                    contentHtml += `</ul></li>`;
+                    contentHtml += `<li><strong>Mid-September - Early October Sowing:</strong> Direct sow the following:
+                            <ul class="list-circle pl-5 mt-2">
+                    `;
+                    plantsForPhase.filter(p => p.plantingMonth === 10).forEach(plant => {
+                        contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds</li>`;
+                    });
+                    contentHtml += `
+                            </ul>
+                        </li>
+                        <li><strong>Ongoing Care:</strong> Fertilize established plants every 3 weeks with a high-nitrogen fertilizer (e.g., 1 tbsp of 21-0-0 per plant, watered in). Continue deep, consistent watering and train vining plants onto trellises.</li>
+                    `;
+                } else if (phase === 3) { // October - December
+                    plantsForPhase = plantData.filter(p => (p.plantingMonth === 10 || p.plantingMonth === 11 || p.plantingMonth === 12));
+                    contentHtml += `
+                        <li><strong>Harvesting:</strong> Begin harvesting quick-maturing crops like radishes, spinach, and lettuce. Harvest regularly to encourage more production.</li>
+                        <li><strong>Succession Planting:</strong> As you harvest, amend the empty square with compost and re-sow with more fast-growing greens or radishes.
+                            <ul class="list-circle pl-5 mt-2">
+                    `;
+                    plantsForPhase.filter(p => (p.name.includes('Radishes') || p.name.includes('Lettuce') || p.name.includes('Spinach')) && (p.plantingMonth === 10 || p.plantingMonth === 11)).forEach(plant => {
+                         contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds (Late Oct-Early Nov)</li>`;
+                    });
+                    contentHtml += `
+                            </ul>
+                        </li>
+                        <li><strong>Pest Management:</strong> Continue monitoring for pests. Hand-pick larger insects or use organic sprays like neem oil in the evening to protect pollinators.</li>
+                        <li><strong>Ranunculus Planting:</strong> In mid-November, plant your pre-sprouted ranunculus corms.</li>
+                        <li><strong>Frost Protection:</strong> As December approaches, monitor weather forecasts. Be ready to cover tender plants (tomatoes, peppers, basil, etc.) with frost cloth on cold nights.</li>
+                        <li><strong>Final Harvests:</strong> Harvest all remaining frost-susceptible crops before a hard freeze. After the first frost, sow your Blue Milkweed seeds for spring germination.
+                            <ul class="list-circle pl-5 mt-2">
+                                <li>Blue Milkweed: Sow ${plantData.find(p => p.name === 'Blue Milkweed')?.seedsToStart || 'N/A'} seeds (After first frost in Dec)</li>
+                            </ul>
+                        </li>
+                    `;
+                }
+                contentHtml += '</ul>';
+                return contentHtml;
+            }
+
+            function renderActionPlan() {
+                actionPlanContainer.innerHTML = '';
+                const titles = [
+                    'Phase 1: Immediate Preparations (Late July - Mid-August)',
+                    'Phase 2: Main Planting & Establishment (Late August - September)',
+                    'Phase 3: Ongoing Care & Harvest (October - December)'
+                ];
+                titles.forEach((title, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-white rounded-lg shadow-md overflow-hidden';
+                    div.innerHTML = `
+                        <button class="w-full text-left p-4 font-semibold flex justify-between items-center accordion-toggle">
+                            <span>${title}</span>
+                            <span class="transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-4 border-t border-gray-200 text-gray-700">${generatePhaseContent(index + 1)}</div>
+                        </div>
+                    `;
+                    actionPlanContainer.appendChild(div);
+                });
+
+                document.querySelectorAll('.accordion-toggle').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const content = button.nextElementSibling;
+                        const icon = button.querySelector('span:last-child');
+                        if (content.style.maxHeight) {
+                            content.style.maxHeight = null;
+                            icon.style.transform = 'rotate(0deg)';
+                        } else {
+                            content.style.maxHeight = content.scrollHeight + "px";
+                            icon.style.transform = 'rotate(180deg)';
+                        }
+                    });
+                });
+            }
+
+            function renderTimelineChart() {
+                const ctx = document.getElementById('timelineChart').getContext('2d');
+                const labels = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const datasets = plantData
+                    .filter(p => p.plantingMonth <= 12)
+                    .map(p => {
+                        const maturityDays = parseInt(p.maturity) || 30;
+                        const startMonth = p.plantingMonth - 7;
+                        const durationMonths = maturityDays / 30;
+                        const data = new Array(6).fill(null);
+                        data[startMonth] = 1;
+                        return {
+                            label: p.name,
+                            data: [
+                                {x: [p.plantingMonth - 0.5, p.plantingMonth - 0.5 + durationMonths], y: p.name}
+                            ],
+                            backgroundColor: Object.values(monthColors)[p.plantingMonth-7] || 'bg-gray-200',
+                            borderColor: 'white',
+                            borderWidth: 2,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                        };
+                    });
+                
+                const plantNames = [...new Set(plantData.filter(p => p.plantingMonth <= 12).map(p => p.name))].sort();
+
+                if (window.timelineChartInstance) {
+                    window.timelineChartInstance.destroy();
+                }
+
+                window.timelineChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: plantNames,
+                        datasets: datasets
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                min: 6.5,
+                                max: 12.5,
+                                grid: {
+                                    display: true,
+                                    drawBorder: false,
+                                },
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        return labels[value-7];
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const plant = plantData.find(p => p.name === context.dataset.label);
+                                        return `${plant.name}: Plant in ${plant.window}`;
+                                    }
+                                }
+                            }
+                        },
+                        onClick: (e) => {
+                            const activePoints = window.timelineChartInstance.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                            if (activePoints.length > 0) {
+                                const clickedIndex = activePoints[0].index;
+                                const month = Math.floor(window.timelineChartInstance.scales.x.getValueForPixel(e.x)) + 7;
+                                renderPlantLibrary(p => p.plantingMonth === month);
+                                document.getElementById('plants').scrollIntoView({ behavior: 'smooth' });
+                            }
+                        }
+                    }
+                });
+            }
+
+            function setupNavbar() {
+                const sections = document.querySelectorAll('section');
+                const navLinks = document.querySelectorAll('.nav-link');
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            navLinks.forEach(link => {
+                                link.classList.remove('active');
+                                if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                    link.classList.add('active');
+                                }
+                            });
+                        }
+                    });
+                }, { rootMargin: '-50% 0px -50% 0px' });
+
+                sections.forEach(section => observer.observe(section));
+
+                navLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        document.querySelector(link.getAttribute('href')).scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    });
+                });
+            }
+
+            function renderSwapSuggestions() {
+                swapSuggestionsContainer.innerHTML = '';
+                swapSuggestions.forEach(swap => {
+                    const swapCard = document.createElement('div');
+                    swapCard.className = 'bg-white p-6 rounded-lg shadow-md mb-4';
+                    swapCard.innerHTML = `
+                        <h3 class="font-bold text-xl mb-2 text-accent">Replace: ${swap.originalPlantName}</h3>
+                        <p class="text-gray-700 mb-4">In bed: <span class="font-semibold">${swap.bedName} (${swap.bedType})</span>, Square: <span class="font-semibold">${swap.squareRow}${swap.squareCol}</span></p>
+                        <div class="space-y-3">
+                            ${swap.swapOptions.map(option => `
+                                <div class="flex items-center justify-between bg-secondary p-3 rounded-md">
+                                    <div>
+                                        <p class="font-semibold">${option.emoji} ${option.name}</p>
+                                        <p class="text-sm text-gray-600">Plant in: ${option.plantingMonth === 7 ? 'July' : option.plantingMonth === 8 ? 'August' : option.plantingMonth === 9 ? 'September' : option.plantingMonth === 10 ? 'October' : option.plantingMonth === 11 ? 'November' : 'December'} (${option.viability})</p>
+                                        <p class="text-xs text-gray-500">${option.notes}</p>
+                                    </div>
+                                    <button class="bg-green-accent text-white px-3 py-1 rounded-full text-sm hover:bg-opacity-80 transition apply-swap-btn" 
+                                            data-original-plant="${swap.originalPlantName}"
+                                            data-bed-type="${swap.bedType}"
+                                            data-bed-name="${swap.bedName}"
+                                            data-square-row="${swap.squareRow}"
+                                            data-square-col="${swap.squareCol}"
+                                            data-new-plant-name="${option.name}"
+                                            data-new-plant-emoji="${option.emoji}"
+                                            data-new-plant-spacing="${option.sfgSpacing}"
+                                            data-new-plant-month="${option.plantingMonth}"
+                                            data-new-plant-viability="${option.viability}"
+                                            data-new-plant-notes="${option.notes}"
+                                            data-new-plant-type="${option.type}"
+                                            data-new-plant-method="${option.method}"
+                                            data-new-plant-seedstostart="${option.seedsToStart}">
+                                        Apply Swap
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    swapSuggestionsContainer.appendChild(swapCard);
+                });
+
+                document.querySelectorAll('.apply-swap-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const btnData = event.target.dataset;
+                        const newPlantData = {
+                            name: btnData.newPlantName,
+                            emoji: btnData.newPlantEmoji,
+                            spacing: parseInt(btnData.newPlantSpacing),
+                            plantingMonth: parseInt(btnData.newPlantMonth),
+                            viability: btnData.newPlantViability,
+                            notes: btnData.newPlantNotes,
+                            type: btnData.newPlantType,
+                            method: btnData.newPlantMethod,
+                            seedsToStart: btnData.newPlantSeedstostart,
+                            maturity: 'N/A' // Default for new plants if not specified
+                        };
+                        applySwap(btnData.originalPlantName, btnData.bedType, btnData.bedName, btnData.squareRow, parseInt(btnData.squareCol), newPlantData);
+                    });
+                });
+            }
+
+            function applySwap(originalPlantName, bedType, bedName, squareRow, squareCol, newPlantData) {
+                // Find the specific bed
+                const bedIndex = bedLayouts[bedType].findIndex(bed => bed.name === bedName);
+                if (bedIndex === -1) return;
+
+                // Find the specific square within that bed
+                const squareIndex = bedLayouts[bedType][bedIndex].squares.findIndex(s => {
+                    // Convert 'A' to 0, 'B' to 1 for row index
+                    const rowIndex = squareRow.charCodeAt(0) - 'A'.charCodeAt(0);
+                    const currentSquareRow = String.fromCharCode('A'.charCodeAt(0) + Math.floor(s.count / (bedLayouts[bedType][bedIndex].grid === 'grid-cols-4' ? 4 : bedLayouts[bedType][bedIndex].grid === 'grid-cols-6' ? 6 : 8)));
+                    const currentSquareCol = (s.count % (bedLayouts[bedType][bedIndex].grid === 'grid-cols-4' ? 4 : bedLayouts[bedType][bedIndex].grid === 'grid-cols-6' ? 6 : 8)) + 1;
+                    // This logic is tricky, better to directly map square index to row/col if possible.
+                    // For simplicity, let's assume the squares array is ordered row by row, then column by column.
+                    // This means for a 4x2 grid (8 squares), A1 is index 0, A2 is 1, A3 is 2, A4 is 3, B1 is 4, etc.
+                    let targetSquareIndex = -1;
+                    if (bedType === '4x2') { // 2 rows, 4 cols
+                        targetSquareIndex = (squareRow === 'A' ? 0 : 1) * 4 + (squareCol - 1);
+                    } else if (bedType === '6x2') { // 2 rows, 6 cols
+                        targetSquareIndex = (squareRow === 'A' ? 0 : 1) * 6 + (squareCol - 1);
+                    } else if (bedType === '8x1') { // 1 row, 8 cols
+                        targetSquareIndex = (squareCol - 1); // Row 'A' is implied
+                    }
+
+                    return bedLayouts[bedType][bedIndex].squares.indexOf(s) === targetSquareIndex;
+                });
+
+                if (squareIndex === -1) {
+                    console.error('Could not find square to swap:', bedType, bedName, squareRow, squareCol);
+                    return;
+                }
+
+                // Update the bed layout
+                bedLayouts[bedType][bedIndex].squares[squareIndex].plant = newPlantData.name;
+                bedLayouts[bedType][bedIndex].squares[squareIndex].count = newPlantData.spacing;
+                bedLayouts[bedType][bedIndex].squares[squareIndex].month = newPlantData.plantingMonth;
+
+                // Add new plant to plantData if it doesn't exist (unless it's an "Extra" of an existing plant)
+                const isExtraOfExisting = newPlantData.name.includes('(Extra)');
+                const existingPlant = plantData.find(p => p.name === newPlantData.name);
+                if (!existingPlant && !isExtraOfExisting) {
+                    plantData.push(newPlantData);
+                } else if (existingPlant && isExtraOfExisting) {
+                    // If it's an "Extra" but the base plant doesn't exist, remove the "(Extra)" and add it.
+                    // This handles cases where the base plant might have been removed or never existed.
+                    const basePlantName = newPlantData.name.replace(' (Extra)', '');
+                    if (!plantData.find(p => p.name === basePlantName)) {
+                        plantData.push({ ...newPlantData, name: basePlantName });
+                    }
+                }
+
+                // Re-render affected sections
+                renderBedLayouts(bedType);
+                renderPlantLibrary();
+                renderTimelineChart(); // Re-render chart to include new plants if added
+                renderActionPlan(); // Re-render action plan as it's now dynamic
+                
+                // Optionally, remove the applied swap suggestion from the list
+                const swapIndex = swapSuggestions.findIndex(s => 
+                    s.originalPlantName === originalPlantName &&
+                    s.bedType === bedType &&
+                    s.bedName === bedName &&
+                    s.squareRow === squareRow &&
+                    s.squareCol === squareCol
+                );
+                if (swapIndex !== -1) {
+                    swapSuggestions.splice(swapIndex, 1);
+                    renderSwapSuggestions(); // Re-render the swap section
+                }
+
+                alert(`Successfully swapped ${originalPlantName} with ${newPlantData.name} in ${bedName} (${bedType}) at square ${squareRow}${squareCol}!`);
+            }
+
+
+            resetFilterBtn.addEventListener('click', () => {
+                renderPlantLibrary();
+            });
+
+            renderPlantLibrary();
+            setupBedSelectors();
+            renderBedLayouts('4x2'); // Initial render for 4x2 beds
+            renderSwapSuggestions();
+            renderActionPlan();
+            renderTimelineChart();
+            setupNavbar();
+        });
+    </script>
+</body>
+</html>
