@@ -241,6 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const firstFrostDisplay = document.getElementById('first-frost-display');
     const totalSpaceDisplay = document.getElementById('total-space-display');
     const bedCountDisplay = document.getElementById('bed-count-display');
+
     const editLocationBtn = document.getElementById('edit-location-btn');
     const locationFormModal = document.getElementById('locationFormModal');
     const zipInput = document.getElementById('zip-input');
@@ -273,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
         "96813": {city: "Honolulu", state: "HI", zone: "11b"},
         "04101": {city: "Portland", state: "ME", zone: "5b"},
     };
-
+  
     const zoneFrostDates = {
         "3a": "Sep 8 - 15",
         "3b": "Sep 16 - 23",
@@ -352,6 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
         zone: "9a",
         firstFrost: zoneFrostDates["9a"]
     };
+
     let userLocation = {...defaultLocation};
 
     function loadData() {
