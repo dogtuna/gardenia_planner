@@ -216,6 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const seedsToOrderList = document.getElementById('seeds-to-order-list');
     const bedTimelineControls = document.getElementById('bed-timeline-controls');
     const addPlantBtn = document.getElementById('add-plant-btn');
+    const addBedBtn = document.getElementById('add-bed-btn');
     const plantFormModal = document.getElementById('plantFormModal');
     const plantForm = document.getElementById('plant-form');
     const plantNameInput = document.getElementById('plant-name');
@@ -228,7 +229,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const plantNotesInput = document.getElementById('plant-notes');
     const plantTypeInput = document.getElementById('plant-type');
     const plantMonthInput = document.getElementById('plant-month');
+    const bedFormModal = document.getElementById('bedFormModal');
+    const bedForm = document.getElementById('bed-form');
+    const bedNameInput = document.getElementById('bed-name');
+    const bedColsInput = document.getElementById('bed-cols');
+    const bedRowsInput = document.getElementById('bed-rows');
     let editPlantIndex = null;
+    let editBedType = null;
+    let editBedIndex = null;
+    let currentBedType = '4x2';
 
     let currentActionPlanFilter = 'All'; // Default filter for action plan
     let seedsToOrder = [];
@@ -265,6 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     loadData();
+    currentBedType = Object.keys(bedLayouts)[0] || currentBedType;
 
     const viabilityClasses = {
         'Good': 'border-green-accent',
@@ -434,14 +444,55 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    window.openBedForm = function(type = null, index = null) {
+        editBedType = type;
+        editBedIndex = index;
+        if (type !== null && index !== null) {
+            const bed = bedLayouts[type][index];
+            bedNameInput.value = bed.name || '';
+            const [c, r] = type.split('x').map(n => parseInt(n));
+            bedColsInput.value = c;
+            bedRowsInput.value = r;
+        } else {
+            bedForm.reset();
+        }
+        bedFormModal.style.display = 'flex';
+    }
+
+    window.closeBedFormModal = function() {
+        bedFormModal.style.display = 'none';
+    }
+
+    window.deleteBed = function(type, index) {
+        if (confirm('Delete this bed?')) {
+            bedLayouts[type].splice(index, 1);
+            if (bedLayouts[type].length === 0) {
+                delete bedLayouts[type];
+                if (currentBedType === type) {
+                    currentBedType = Object.keys(bedLayouts)[0] || '';
+                }
+            }
+            setupBedSelectors();
+            if (currentBedType) renderBedLayouts(currentBedType);
+            saveData();
+        }
+    }
+
     function renderBedLayouts(bedType) {
         bedLayoutContainer.innerHTML = '';
-        const beds = bedLayouts[bedType];
-        beds.forEach(bed => {
+        const beds = bedLayouts[bedType] || [];
+        beds.forEach((bed, idx) => {
             const bedDiv = document.createElement('div');
             bedDiv.className = 'mb-8';
-            bedDiv.innerHTML = `<h3 class="text-xl font-semibold mb-3 text-center">${bed.name} (${bedType})</h3>`;
-            
+            bedDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-xl font-semibold">${bed.name} (${bedType})</h3>
+                    <div class="flex gap-2">
+                        <button class="px-2 py-1 bg-blue-accent text-white rounded" onclick="openBedForm('${bedType}', ${idx})">Edit</button>
+                        <button class="px-2 py-1 bg-red-500 text-white rounded" onclick="deleteBed('${bedType}', ${idx})">Delete</button>
+                    </div>
+                </div>`;
+
             const gridContainer = document.createElement('div');
             gridContainer.className = `garden-bed-grid ${bed.grid} max-w-md mx-auto bg-gray-200 p-1 rounded-md`;
             
@@ -482,7 +533,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 button.classList.add('bg-green-accent', 'text-white');
                 button.classList.remove('bg-secondary');
-                renderBedLayouts(type);
+                currentBedType = type;
+                renderBedLayouts(currentBedType);
             };
             bedTypeSelector.appendChild(button);
         });
@@ -1053,6 +1105,39 @@ document.addEventListener('DOMContentLoaded', function() {
         openPlantForm();
     });
 
+    addBedBtn.addEventListener('click', () => {
+        openBedForm();
+    });
+
+    bedForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = bedNameInput.value;
+        const cols = parseInt(bedColsInput.value);
+        const rows = parseInt(bedRowsInput.value);
+        if (!cols || !rows) return;
+        const type = `${cols}x${rows}`;
+        const grid = `grid-cols-${cols}`;
+        const squares = Array.from({ length: cols * rows }, () => ({ plant: 'Empty', count: 0, month: 0 }));
+        if (editBedType !== null && editBedIndex !== null) {
+            if (type !== editBedType) {
+                bedLayouts[editBedType].splice(editBedIndex, 1);
+                if (!bedLayouts[type]) bedLayouts[type] = [];
+                bedLayouts[type].push({ name, grid, squares });
+                if (currentBedType === editBedType) currentBedType = type;
+            } else {
+                bedLayouts[editBedType][editBedIndex] = { name, grid, squares };
+            }
+        } else {
+            if (!bedLayouts[type]) bedLayouts[type] = [];
+            bedLayouts[type].push({ name, grid, squares });
+            currentBedType = type;
+        }
+        setupBedSelectors();
+        renderBedLayouts(currentBedType);
+        saveData();
+        closeBedFormModal();
+    });
+
     plantForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const newPlant = {
@@ -1079,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     renderPlantLibrary();
     setupBedSelectors();
-    renderBedLayouts('4x2'); // Initial render for 4x2 beds
+    renderBedLayouts(currentBedType); // Initial render
     renderSwapSuggestions();
     renderActionPlan(currentActionPlanFilter); // Initial render of action plan
     renderTimelineChart();
