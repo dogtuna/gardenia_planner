@@ -46,15 +46,11 @@
                     <h3 class="font-semibold text-lg mb-2">Location</h3>
                     <p id="location-display" class="text-2xl text-accent">Montgomery, TX</p>
                     <p id="zone-display" class="text-gray-500">USDA Zone 9a</p>
-                    <button id="edit-location-btn" class="mt-2 bg-blue-accent text-white px-3 py-1 rounded">Edit</button>
-                    <div id="edit-location-form" class="mt-2 hidden">
-                        <input id="zip-input" type="text" class="border p-1 rounded w-24" placeholder="ZIP">
-                        <button id="save-location-btn" class="bg-green-accent text-white px-2 py-1 rounded ml-1">Save</button>
-                    </div>
+                    <button id="edit-location-btn" class="mt-2 bg-blue-accent text-white px-3 py-1 rounded" onclick="openLocationFormModal()">Edit</button>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-lg text-center">
                     <h3 class="font-semibold text-lg mb-2">First Frost</h3>
-                    <p class="text-2xl text-blue-accent">Dec 1 - 10</p>
+                    <p id="first-frost-display" class="text-2xl text-blue-accent">Dec 1 - 10</p>
                     <p class="text-gray-500">Average Date</p>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-lg text-center">
@@ -168,6 +164,17 @@
                     <button type="button" onclick="closeBedFormModal()" class="flex-1 bg-secondary px-4 py-2 rounded">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+    <div id="locationFormModal" class="modal" onclick="closeLocationFormModal()">
+        <div class="modal-content bg-white p-8 rounded-lg shadow-2xl w-11/12 md:w-1/3 max-w-md" onclick="event.stopPropagation()">
+            <div class="space-y-4">
+                <input id="zip-input" type="text" class="w-full border p-2 rounded" placeholder="ZIP Code">
+                <div class="flex gap-2">
+                    <button id="save-location-btn" class="flex-1 bg-green-accent text-white px-4 py-2 rounded">Save</button>
+                    <button type="button" onclick="closeLocationFormModal()" class="flex-1 bg-secondary px-4 py-2 rounded">Cancel</button>
+                </div>
+            </div>
         </div>
     </div>
     <script src="app.js"></script>
