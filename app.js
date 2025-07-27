@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const locationDisplay = document.getElementById('location-display');
     const zoneDisplay = document.getElementById('zone-display');
     const editLocationBtn = document.getElementById('edit-location-btn');
-    const editLocationForm = document.getElementById('edit-location-form');
+    const locationFormModal = document.getElementById('locationFormModal');
     const zipInput = document.getElementById('zip-input');
     const saveLocationBtn = document.getElementById('save-location-btn');
     let editPlantIndex = null;
@@ -270,6 +270,30 @@ document.addEventListener('DOMContentLoaded', function() {
         "96813": {city: "Honolulu", state: "HI", zone: "11b"},
         "04101": {city: "Portland", state: "ME", zone: "5b"},
     };
+
+    async function lookupZip(zip) {
+        try {
+            const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
+            if (!zoneRes.ok) throw new Error('Zone lookup failed');
+            const zoneJson = await zoneRes.json();
+
+            const locRes = await fetch(`https://api.zippopotam.us/us/${zip}`);
+            if (!locRes.ok) throw new Error('City lookup failed');
+            const locJson = await locRes.json();
+
+            const place = locJson.places && locJson.places[0];
+            if (!place) throw new Error('No city found');
+
+            return {
+                city: place['place name'],
+                state: place['state abbreviation'],
+                zone: zoneJson.zone
+            };
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
 
     const defaultLocation = {zip: "77316", ...zipData["77316"]};
     let userLocation = {...defaultLocation};
@@ -503,6 +527,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.closeBedFormModal = function() {
         bedFormModal.style.display = 'none';
+    }
+
+    window.openLocationFormModal = function() {
+        locationFormModal.style.display = 'flex';
+    }
+
+    window.closeLocationFormModal = function() {
+        locationFormModal.style.display = 'none';
     }
 
     window.deleteBed = function(type, index) {
@@ -1175,15 +1207,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     editLocationBtn.addEventListener('click', () => {
-        editLocationForm.classList.toggle('hidden');
+        locationFormModal.style.display = 'flex';
     });
 
-    saveLocationBtn.addEventListener('click', () => {
+    saveLocationBtn.addEventListener('click', async () => {
         const zip = zipInput.value.trim();
-        if (zipData[zip]) {
-            userLocation = {zip, ...zipData[zip]};
+        let locationInfo = zipData[zip];
+        if (!locationInfo) {
+            locationInfo = await lookupZip(zip);
+            if (locationInfo) {
+                zipData[zip] = locationInfo; // cache for session
+            }
+        }
+        if (locationInfo) {
+            userLocation = { zip, ...locationInfo };
             updateLocationUI();
-            editLocationForm.classList.add('hidden');
+            locationFormModal.style.display = 'none';
             saveData();
         } else {
             alert('ZIP code not available.');
