@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const locationDisplay = document.getElementById('location-display');
     const zoneDisplay = document.getElementById('zone-display');
     const editLocationBtn = document.getElementById('edit-location-btn');
-    const editLocationForm = document.getElementById('edit-location-form');
+    const locationFormModal = document.getElementById('locationFormModal');
     const zipInput = document.getElementById('zip-input');
     const saveLocationBtn = document.getElementById('save-location-btn');
     let editPlantIndex = null;
@@ -503,6 +503,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.closeBedFormModal = function() {
         bedFormModal.style.display = 'none';
+    }
+
+    window.closeLocationFormModal = function() {
+        locationFormModal.style.display = 'none';
     }
 
     window.deleteBed = function(type, index) {
@@ -1175,7 +1179,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     editLocationBtn.addEventListener('click', () => {
-        editLocationForm.classList.toggle('hidden');
+        locationFormModal.style.display = 'flex';
     });
 
     saveLocationBtn.addEventListener('click', () => {
@@ -1183,7 +1187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (zipData[zip]) {
             userLocation = {zip, ...zipData[zip]};
             updateLocationUI();
-            editLocationForm.classList.add('hidden');
+            locationFormModal.style.display = 'none';
             saveData();
         } else {
             alert('ZIP code not available.');
