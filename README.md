@@ -9,7 +9,7 @@ This repository contains a single-page web application for planning a fall veget
 3. Open the `index.html` file directly in your browser. No build process is required.
 
 
-An internet connection is needed because the page loads Tailwind CSS, Chart.js, fonts from public CDNs, and now fetches location details and average first frost dates from external APIs when you change your ZIP code.
+An internet connection is needed because the page loads Tailwind CSS, Chart.js, fonts from public CDNs, and now fetches location details and average first frost dates from external APIs when you change your ZIP code. If the frost API is unavailable, the app falls back to an approximate date based on your USDA zone.
 
 
 ## Prerequisites
