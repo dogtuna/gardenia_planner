@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -191,7 +192,16 @@
 
         <section id="plan" class="mb-12 scroll-mt-24">
             <h2 class="text-3xl font-bold mb-2 text-center">Step-by-Step Action Plan</h2>
-            <p class="text-center text-gray-600 mb-6">Your detailed guide from soil prep to final harvest. Click each phase to expand.</p>
+            <p class="text-center text-gray-600 mb-6">Your detailed guide from soil prep to final harvest. Use the filters to focus on specific plant types.</p>
+            <div class="flex justify-center flex-wrap gap-2 mb-6" id="action-plan-filters">
+                <button class="px-4 py-2 rounded-full bg-green-accent text-white filter-action-plan-btn" data-filter="All">All Plants</button>
+                <button class="px-4 py-2 rounded-full bg-secondary filter-action-plan-btn" data-filter="Greens">Greens</button>
+                <button class="px-4 py-2 rounded-full bg-secondary filter-action-plan-btn" data-filter="Fruiting">Fruiting</button>
+                <button class="px-4 py-2 rounded-full bg-secondary filter-action-plan-btn" data-filter="Roots">Roots</button>
+                <button class="px-4 py-2 rounded-full bg-secondary filter-action-plan-btn" data-filter="Herbs">Herbs</button>
+                <button class="px-4 py-2 rounded-full bg-secondary filter-action-plan-btn" data-filter="Flowers">Flowers</button>
+                <button class="px-4 py-2 rounded-full bg-secondary filter-action-plan-btn" data-filter="Other">Other</button>
+            </div>
             <div id="action-plan-container" class="space-y-4 max-w-4xl mx-auto"></div>
         </section>
     </main>
@@ -207,42 +217,42 @@
         document.addEventListener('DOMContentLoaded', function() {
             
             let plantData = [
-                { name: 'Jelly Bean Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Big Boy Hybrid Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '78 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Vigorous vining, needs tall trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Peppermint San Marzano Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Large Cherry Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '50-60 (from transplant)', notes: 'Fastest maturing tomato, best chance from seed if started immediately indoors. Transplants still better. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Greek Oregano', viability: 'Good', method: 'Direct Sow / Transplant', window: 'Jul-Aug', spacing: 1, maturity: 'N/A (Perennial)', notes: 'Benefits from afternoon shade in hot climates. Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Cosmos', viability: 'Plant Later', method: 'Direct Sow / Transplant', window: 'Sep-Oct', spacing: '12-18" apart', maturity: 'N/A (Flower)', notes: 'Plant later in the fall. Attracts pollinators.', type: 'Flower', emoji: '🌸', plantingMonth: 9, seedsToStart: '10-15' },
-                { name: 'Strawflower', viability: 'Plant Later', method: 'Direct Sow / Transplant', window: 'Mid-Oct', spacing: '6-12" apart', maturity: 'N/A (Flower)', notes: 'Tolerates temperatures down to 10°F. Plant later in the fall.', type: 'Flower', emoji: '🌼', plantingMonth: 10, seedsToStart: '10-15' },
-                { name: 'Black Elderberry', viability: 'Good', method: 'Direct Sow / Transplant', window: 'Jul-Aug', spacing: '4ft apart', maturity: 'N/A (Perennial)', notes: 'Large shrub, best for long-term establishment. Full sun for optimum production.', type: 'Other', emoji: '🌳', plantingMonth: 7, seedsToStart: '2-3' },
-                { name: 'Blue Milkweed', viability: 'Winter Project', method: 'Direct Sow', window: 'Dec (After frost)', spacing: 'N/A', maturity: 'N/A (Perennial)', notes: 'Requires cold stratification; plant after first frost for spring germination.', type: 'Other', emoji: '🦋', plantingMonth: 12, seedsToStart: '10-15' },
-                { name: 'Butternut Squash', viability: 'Gamble', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '85-110', notes: 'Very late start for full maturity before frost. Needs strong trellis. Frost susceptible.', type: 'Squash', emoji: '🎃', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Pickling Cucumber', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 2, maturity: '45-53', notes: 'Excellent for immediate planting. Needs trellis. Frost susceptible.', type: 'Cucumber', emoji: '🥒', plantingMonth: 7, seedsToStart: '5-7' },
-                { name: 'Marigolds', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 4, maturity: 'N/A (Flower)', notes: 'Excellent companion plant, repels pests.', type: 'Flower', emoji: '🌻', plantingMonth: 7, seedsToStart: '15-20' },
-                { name: 'Ranunculus', viability: 'Winter Project', method: 'Plant Corms', window: 'Mid-Nov', spacing: '8-9" apart', maturity: 'N/A (Flower)', notes: 'Requires pre-sprouting corms. Plant later in the fall. Protect from freezes.', type: 'Flower', emoji: '🌷', plantingMonth: 11, seedsToStart: 'N/A (Corms)' },
-                { name: 'Little Gem Lettuce', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 4, maturity: 'N/A (Cool season)', notes: 'Best for fall. Can succession plant. Frost tolerant.', type: 'Greens', emoji: '🥬', plantingMonth: 8, seedsToStart: '15-20' },
-                { name: 'Armenian Cucumber', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 2, maturity: '60-75', notes: 'Excellent for immediate planting. Needs trellis. Frost susceptible.', type: 'Cucumber', emoji: '🥒', plantingMonth: 7, seedsToStart: '5-7' },
-                { name: 'Cocozelle Zucchini', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '55', notes: 'Excellent for immediate planting. Needs trellis. Frost susceptible.', type: 'Squash', emoji: '🥒', plantingMonth: 7, seedsToStart: '5-7' },
-                { name: 'Long Purple Eggplant', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '80', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Other', emoji: '🍆', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Baby Leaf Spinach', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 9, maturity: 'N/A (Cool season)', notes: 'Excellent for fall. Frost tolerant. Needs dark to germinate.', type: 'Greens', emoji: '🍃', plantingMonth: 8, seedsToStart: '20-25' },
-                { name: 'Bloomsdale Spinach', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 9, maturity: 'N/A (Cool season)', notes: 'Excellent for fall. Frost tolerant. Needs dark to germinate.', type: 'Greens', emoji: '🍃', plantingMonth: 8, seedsToStart: '10-15' },
-                { name: 'Roma II Beans', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 9, maturity: '55-60', notes: 'Excellent for immediate planting. Bush type. Frost susceptible.', type: 'Bean', emoji: '🫘', plantingMonth: 7, seedsToStart: '20-25' },
-                { name: 'Blue Lake 156 Beans', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 9, maturity: '55', notes: 'Excellent for immediate planting. Bush type. Frost susceptible.', type: 'Bean', emoji: '🫘', plantingMonth: 7, seedsToStart: '20-25' },
-                { name: 'Sugar Snap Peas', viability: 'Plant Later', method: 'Direct Sow', window: 'Mid-Sep-Oct', spacing: 9, maturity: '60-80', notes: 'Plant later in the fall. Needs trellis. Frost tolerant.', type: 'Pea', emoji: '🫛', plantingMonth: 9, seedsToStart: '40-50' },
-                { name: 'French Dressing Radishes', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Oct-Early Nov', spacing: 16, maturity: '25-35', notes: 'Very fast. Ideal for succession planting later in fall. Cool season.', type: 'Root', emoji: '🌶️', plantingMonth: 10, seedsToStart: '20-25' },
-                { name: 'Cherry Belle Radishes', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Oct-Early Nov', spacing: 16, maturity: '22-25', notes: 'Very fast. Ideal for succession planting later in fall. Cool season.', type: 'Root', emoji: '🌶️', plantingMonth: 10, seedsToStart: '20-25' },
-                { name: 'Carnival Blend Carrots', viability: 'Plant Later', method: 'Direct Sow', window: 'Mid-Sep', spacing: 16, maturity: '65-75', notes: 'Direct sow only. Plant later in the fall. Cool season.', type: 'Root', emoji: '🥕', plantingMonth: 9, seedsToStart: '40-50' },
-                { name: 'Broad Leaf Sage', viability: 'Plant Later', method: 'Direct Sow (Difficult) / Purchase Transplants', window: 'Early Oct', spacing: 1, maturity: 'N/A (Perennial)', notes: 'Best from transplants. Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '3-5' },
-                { name: 'Genovese Basil', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 4, maturity: 'N/A (Annual herb)', notes: 'Zero frost tolerance. Good for immediate planting.', type: 'Herb', emoji: '🌿', plantingMonth: 7, seedsToStart: '20-25' },
-                { name: 'Cilantro', viability: 'Plant Later', method: 'Direct Sow', window: 'Sep', spacing: 9, maturity: '45-70', notes: 'Cool season. Plant later in the fall. Tolerates down to 10°F.', type: 'Herb', emoji: '🌿', plantingMonth: 9, seedsToStart: '20-25' },
-                { name: 'Fernleaf Dill', viability: 'Plant Later', method: 'Direct Sow', window: 'Early Oct', spacing: 1, maturity: 'N/A (Annual herb)', notes: 'Loves mild weather. Plant later in the fall.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '3-5' },
-                { name: 'Cayenne Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70-75 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🌶️', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Santa Fe Grande Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🌶️', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Cal Wonder Bell Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '60-80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🫑', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Jalapeno Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70-80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🌶️', plantingMonth: 7, seedsToStart: '3-5' },
-                { name: 'Chives', viability: 'Plant Later', method: 'Direct Sow', window: 'Early Oct', spacing: 16, maturity: 'N/A (Perennial)', notes: 'Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '35-45' },
-                { name: 'Warrior Onion', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 16, maturity: '60 (from direct seed)', notes: 'Cool season. Can stand freezing.', type: 'Root', emoji: '🧅', plantingMonth: 8, seedsToStart: '50-60' },
-                { name: 'Sugar Baby Watermelon', viability: 'Gamble', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '70-80', notes: 'Needs strong trellis and vine management. Frost susceptible.', type: 'Other', emoji: '🍉', plantingMonth: 7, seedsToStart: '3-5' },
+                { name: 'Jelly Bean Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep warm (75-85°F).'}, {stage: 'True Leaves', days: '2-3 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '70-80 days after transplant', notes: 'Harvest ripe fruits regularly.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (e.g., 5-5-5)', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Tomato-specific fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
+                { name: 'Big Boy Hybrid Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '78 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Vigorous vining, needs tall trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep warm (75-85°F).'}, {stage: 'True Leaves', days: '2-3 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '78-90 days after transplant', notes: 'Harvest ripe fruits regularly.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (e.g., 5-5-5)', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Tomato-specific fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
+                { name: 'Peppermint San Marzano Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep warm (75-85°F).'}, {stage: 'True Leaves', days: '2-3 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '80-95 days after transplant', notes: 'Harvest ripe fruits regularly.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (e.g., 5-5-5)', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Tomato-specific fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
+                { name: 'Large Cherry Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '50-60 (from transplant)', notes: 'Fastest maturing tomato, best chance from seed if started immediately indoors. Transplants still better. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep warm (75-85°F).'}, {stage: 'True Leaves', days: '2-3 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '50-60 days after transplant', notes: 'Harvest ripe fruits regularly.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (e.g., 5-5-5)', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Tomato-specific fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
+                { name: 'Greek Oregano', viability: 'Good', method: 'Direct Sow / Transplant', window: 'Jul-Aug', spacing: 1, maturity: 'N/A (Perennial)', notes: 'Benefits from afternoon shade in hot climates. Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Lightly cover seeds. Keep moist.'}, {stage: 'Establishment', days: 'Ongoing', notes: 'Pinch back to encourage bushy growth.'}], feedingSchedule: [{type: 'Compost tea / Balanced liquid fertilizer', frequency: 'Monthly', stage: 'After establishment'}] },
+                { name: 'Cosmos', viability: 'Plant Later', method: 'Direct Sow / Transplant', window: 'Sep-Oct', spacing: '12-18" apart', maturity: 'N/A (Flower)', notes: 'Plant later in the fall. Attracts pollinators.', type: 'Flower', emoji: '🌸', plantingMonth: 9, seedsToStart: '10-15', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-10 days', notes: 'Lightly cover seeds.'}, {stage: 'First Blooms', days: '50-60 days', notes: 'Deadhead regularly for more blooms.'}], feedingSchedule: [{type: 'Low-nitrogen fertilizer', frequency: 'Monthly', stage: 'After establishment'}] },
+                { name: 'Strawflower', viability: 'Plant Later', method: 'Direct Sow / Transplant', window: 'Mid-Oct', spacing: '6-12" apart', maturity: 'N/A (Flower)', notes: 'Tolerates temperatures down to 10°F. Plant later in the fall.', type: 'Flower', emoji: '🌼', plantingMonth: 10, seedsToStart: '10-15', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Lightly cover seeds.'}, {stage: 'First Blooms', days: '60-70 days', notes: 'Harvest for drying when flowers are half open.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Monthly', stage: 'After establishment'}] },
+                { name: 'Black Elderberry', viability: 'Good', method: 'Direct Sow / Transplant', window: 'Jul-Aug', spacing: '4ft apart', maturity: 'N/A (Perennial)', notes: 'Large shrub, best for long-term establishment. Full sun for optimum production.', type: 'Other', emoji: '🌳', plantingMonth: 7, seedsToStart: '2-3', successionWaves: 1, growthStages: [{stage: 'Germination', days: '2-4 weeks', notes: 'Requires patience. Keep moist.'}, {stage: 'Establishment', days: 'Ongoing', notes: 'Focus on root development. May not fruit in first year.'}], feedingSchedule: [{type: 'Compost / Balanced granular fertilizer', frequency: 'Annually (Spring)', stage: 'After establishment'}] },
+                { name: 'Blue Milkweed', viability: 'Winter Project', method: 'Direct Sow', window: 'Dec (After frost)', spacing: 'N/A', maturity: 'N/A (Perennial)', notes: 'Requires cold stratification; plant after first frost for spring germination.', type: 'Other', emoji: '🦋', plantingMonth: 12, seedsToStart: '10-15', successionWaves: 1, growthStages: [{stage: 'Germination', days: 'Spring (after cold stratification)', notes: 'Seeds need winter chill to sprout.'}, {stage: 'First Blooms', days: 'Summer (Year 2)', notes: 'Attracts Monarch butterflies.'}], feedingSchedule: [{type: 'None/Minimal', frequency: 'N/A', stage: 'Prefers lean soil'}] },
+                { name: 'Butternut Squash', viability: 'Gamble', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '85-110', notes: 'Very late start for full maturity before frost. Needs strong trellis. Frost susceptible.', type: 'Squash', emoji: '🎃', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-10 days', notes: 'Plant 1 inch deep. Keep moist.'}, {stage: 'Vining', days: '3-4 weeks', notes: 'Train onto trellis immediately.'}, {stage: 'First Fruit Set', days: '60-70 days', notes: 'Hand-pollinate if needed. Ensure consistent water.'}, {stage: 'Harvest', days: '85-110 days', notes: 'Harvest when skin is hard and color is deep tan.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves emerge'}, {type: 'Higher potassium fertilizer (e.g., 5-10-10)', frequency: 'Every 2 weeks', stage: 'Once flowering begins'}] },
+                { name: 'Pickling Cucumber', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 2, maturity: '45-53', notes: 'Excellent for immediate planting. Needs trellis. Frost susceptible.', type: 'Cucumber', emoji: '🥒', plantingMonth: 7, seedsToStart: '5-7', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '3-10 days', notes: 'Plant 1 inch deep. Keep moist.'}, {stage: 'Vining', days: '2-3 weeks', notes: 'Train onto trellis immediately.'}, {stage: 'First Fruit Set', days: '35-40 days', notes: 'Ensure consistent water to prevent bitterness.'}, {stage: 'Harvest', days: '45-53 days', notes: 'Harvest frequently when small for pickling.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves emerge'}, {type: 'Higher potassium fertilizer', frequency: 'Every 1-2 weeks', stage: 'Once flowering begins'}] },
+                { name: 'Marigolds', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 4, maturity: 'N/A (Flower)', notes: 'Excellent companion plant, repels pests.', type: 'Flower', emoji: '�', plantingMonth: 7, seedsToStart: '15-20', successionWaves: 1, growthStages: [{stage: 'Germination', days: '5-10 days', notes: 'Lightly cover seeds.'}, {stage: 'First Blooms', days: '40-50 days', notes: 'Deadhead to encourage more flowers.'}], feedingSchedule: [{type: 'None/Minimal', frequency: 'N/A', stage: 'Generally not required'}] },
+                { name: 'Ranunculus', viability: 'Winter Project', method: 'Plant Corms', window: 'Mid-Nov', spacing: '8-9" apart', maturity: 'N/A (Flower)', notes: 'Requires pre-sprouting corms. Plant later in the fall. Protect from freezes.', type: 'Flower', emoji: '🌷', plantingMonth: 11, seedsToStart: 'N/A (Corms)', successionWaves: 1, growthStages: [{stage: 'Pre-sprouting', days: '10-14 days', notes: 'Soak corms, then chill in moist medium.'}, {stage: 'Planting', days: 'Mid-Nov', notes: 'Plant claws down, 2-3 inches deep.'}, {stage: 'First Blooms', days: 'Late Winter/Early Spring', notes: 'Protect from hard freezes.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Monthly', stage: 'After sprouting and during bloom'}] },
+                { name: 'Little Gem Lettuce', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 4, maturity: 'N/A (Cool season)', notes: 'Best for fall. Can succession plant. Frost tolerant.', type: 'Greens', emoji: '🥬', plantingMonth: 8, seedsToStart: '15-20', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '7-10 days', notes: 'Lightly cover seeds. Keep moist.'}, {stage: 'Baby Leaf Harvest', days: '25-30 days', notes: 'Cut outer leaves for continuous harvest.'}, {stage: 'Full Head Harvest', days: '45-55 days', notes: 'Harvest entire head before bolting.'}], feedingSchedule: [{type: 'Nitrogen-rich liquid fertilizer (e.g., fish emulsion)', frequency: 'Every 2 weeks', stage: 'After true leaves emerge'}] },
+                { name: 'Armenian Cucumber', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 2, maturity: '60-75', notes: 'Excellent for immediate planting. Needs trellis. Frost susceptible.', type: 'Cucumber', emoji: '🥒', plantingMonth: 7, seedsToStart: '5-7', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '3-10 days', notes: 'Plant 1 inch deep. Keep moist.'}, {stage: 'Vining', days: '2-3 weeks', notes: 'Train onto trellis immediately.'}, {stage: 'First Fruit Set', days: '50-60 days', notes: 'Ensure consistent water to prevent bitterness.'}, {stage: 'Harvest', days: '60-75 days', notes: 'Harvest frequently when young and tender.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves emerge'}, {type: 'Higher potassium fertilizer', frequency: 'Every 1-2 weeks', stage: 'Once flowering begins'}] },
+                { name: 'Cocozelle Zucchini', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '55', notes: 'Excellent for immediate planting. Needs trellis. Frost susceptible.', type: 'Squash', emoji: '🥒', plantingMonth: 7, seedsToStart: '5-7', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-10 days', notes: 'Plant 1 inch deep. Keep moist.'}, {stage: 'First Fruit Set', days: '40-45 days', notes: 'Ensure good pollination. Harvest frequently.'}, {stage: 'Harvest', days: '55-60 days', notes: 'Harvest when 6-8 inches long for best flavor.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves emerge'}, {type: 'Higher potassium fertilizer', frequency: 'Every 1-2 weeks', stage: 'Once flowering begins'}] },
+                { name: 'Long Purple Eggplant', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '80', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Other', emoji: '🍆', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep warm (75-85°F).'}, {stage: 'True Leaves', days: '2-3 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Fruit Set', days: '60-70 days after transplant', notes: 'Ensure consistent water.'}, {stage: 'Harvest', days: '80-90 days after transplant', notes: 'Harvest when skin is shiny and firm.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Balanced granular fertilizer', frequency: 'Every 3-4 weeks', stage: 'After transplanting and fruit set'}] },
+                { name: 'Baby Leaf Spinach', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 9, maturity: 'N/A (Cool season)', notes: 'Excellent for fall. Frost tolerant. Needs dark to germinate.', type: 'Greens', emoji: '🍃', plantingMonth: 8, seedsToStart: '20-25', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '5-9 days', notes: 'Keep soil consistently moist and dark.'}, {stage: 'First True Leaves', days: '10-14 days', notes: 'Thin to final spacing. Ensure good airflow.'}, {stage: 'Baby Leaf Harvest', days: '25-30 days', notes: 'Begin cutting outer leaves for continuous harvest.'}, {stage: 'Full Size Harvest', days: '40-50 days', notes: 'Harvest entire plant or continue cut-and-come-again.'}], feedingSchedule: [{type: 'Nitrogen-rich liquid fertilizer (e.g., fish emulsion)', frequency: 'Every 2 weeks', stage: 'After true leaves emerge'}] },
+                { name: 'Bloomsdale Spinach', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 9, maturity: 'N/A (Cool season)', notes: 'Excellent for fall. Frost tolerant. Needs dark to germinate.', type: 'Greens', emoji: '🍃', plantingMonth: 8, seedsToStart: '10-15', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '5-9 days', notes: 'Keep soil consistently moist and dark.'}, {stage: 'First True Leaves', days: '10-14 days', notes: 'Thin to final spacing. Ensure good airflow.'}, {stage: 'Baby Leaf Harvest', days: '30-35 days', notes: 'Begin cutting outer leaves for continuous harvest.'}, {stage: 'Full Size Harvest', days: '45-55 days', notes: 'Harvest entire plant or continue cut-and-come-again.'}], feedingSchedule: [{type: 'Nitrogen-rich liquid fertilizer (e.g., fish emulsion)', frequency: 'Every 2 weeks', stage: 'After true leaves emerge'}] },
+                { name: 'Roma II Beans', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 9, maturity: '55-60', notes: 'Excellent for immediate planting. Bush type. Frost susceptible.', type: 'Bean', emoji: '🫘', plantingMonth: 7, seedsToStart: '20-25', successionWaves: 2, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '7-10 days', notes: 'Plant 1-1.5 inches deep. Keep moist.'}, {stage: 'First Flowers', days: '30-35 days', notes: 'Ensure consistent moisture.'}, {stage: 'First Harvest', days: '55-60 days', notes: 'Harvest regularly to encourage more production.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (low nitrogen)', frequency: 'Every 3-4 weeks', stage: 'After flowering begins'}] },
+                { name: 'Blue Lake 156 Beans', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 9, maturity: '55', notes: 'Excellent for immediate planting. Bush type. Frost susceptible.', type: 'Bean', emoji: '🫘', plantingMonth: 7, seedsToStart: '20-25', successionWaves: 2, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '7-10 days', notes: 'Plant 1-1.5 inches deep. Keep moist.'}, {stage: 'First Flowers', days: '30-35 days', notes: 'Ensure consistent moisture.'}, {stage: 'First Harvest', days: '55-60 days', notes: 'Harvest regularly to encourage more production.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (low nitrogen)', frequency: 'Every 3-4 weeks', stage: 'After flowering begins'}] },
+                { name: 'Sugar Snap Peas', viability: 'Plant Later', method: 'Direct Sow', window: 'Mid-Sep-Oct', spacing: 9, maturity: '60-80', notes: 'Plant later in the fall. Needs trellis. Frost tolerant.', type: 'Pea', emoji: '🫛', plantingMonth: 9, seedsToStart: '40-50', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Plant 0.5-1 inch deep. Keep moist.'}, {stage: 'Vining', days: '3-4 weeks', notes: 'Provide trellis support immediately.'}, {stage: 'First Harvest', days: '60-80 days', notes: 'Harvest pods when plump and sweet.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (low nitrogen)', frequency: 'Every 3-4 weeks', stage: 'After flowering begins'}] },
+                { name: 'French Dressing Radishes', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Oct-Early Nov', spacing: 16, maturity: '25-35', notes: 'Very fast. Ideal for succession planting later in fall. Cool season.', type: 'Root', emoji: '🌶️', plantingMonth: 10, seedsToStart: '20-25', successionWaves: 4, successionInterval: '1-2 weeks', growthStages: [{stage: 'Germination', days: '3-7 days', notes: 'Keep moist. Lightly cover seeds.'}, {stage: 'Root Swelling', days: '15-20 days', notes: 'Ensure consistent moisture to prevent pithiness.'}, {stage: 'Harvest', days: '25-35 days', notes: 'Harvest promptly when roots are small and tender.'}], feedingSchedule: [{type: 'None/Minimal', frequency: 'N/A', stage: 'Generally not required, fast growing'}] },
+                { name: 'Cherry Belle Radishes', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Oct-Early Nov', spacing: 16, maturity: '22-25', notes: 'Very fast. Ideal for succession planting later in fall. Cool season.', type: 'Root', emoji: '🌶️', plantingMonth: 10, seedsToStart: '20-25', successionWaves: 4, successionInterval: '1-2 weeks', growthStages: [{stage: 'Germination', days: '3-7 days', notes: 'Keep moist. Lightly cover seeds.'}, {stage: 'Root Swelling', days: '12-18 days', notes: 'Ensure consistent moisture to prevent pithiness.'}, {stage: 'Harvest', days: '22-25 days', notes: 'Harvest promptly when roots are small and tender.'}], feedingSchedule: [{type: 'None/Minimal', frequency: 'N/A', stage: 'Generally not required, fast growing'}] },
+                { name: 'Carnival Blend Carrots', viability: 'Plant Later', method: 'Direct Sow', window: 'Mid-Sep', spacing: 16, maturity: '65-75', notes: 'Direct sow only. Plant later in the fall. Cool season.', type: 'Root', emoji: '🥕', plantingMonth: 9, seedsToStart: '40-50', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-21 days', notes: 'Can be slow. Keep consistently moist. Lightly cover.'}, {stage: 'Thinning', days: '3-4 weeks', notes: 'Thin to 2-3 inches apart for good root development.'}, {stage: 'Root Development', days: 'Ongoing', notes: 'Keep soil loose and moist.'}, {stage: 'Harvest', days: '65-75 days', notes: 'Harvest when roots are desired size.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (low nitrogen)', frequency: 'Every 3-4 weeks', stage: 'After thinning'}] },
+                { name: 'Broad Leaf Sage', viability: 'Plant Later', method: 'Direct Sow (Difficult) / Purchase Transplants', window: 'Early Oct', spacing: 1, maturity: 'N/A (Perennial)', notes: 'Best from transplants. Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-21 days', notes: 'Can be slow from seed. Keep moist.'}, {stage: 'Establishment', days: 'Ongoing', notes: 'Pinch back to encourage bushy growth.'}], feedingSchedule: [{type: 'Compost tea / Balanced granular fertilizer', frequency: 'Monthly', stage: 'After establishment'}] },
+                { name: 'Genovese Basil', viability: 'Good', method: 'Direct Sow', window: 'Jul-Aug', spacing: 4, maturity: 'N/A (Annual herb)', notes: 'Zero frost tolerance. Good for immediate planting.', type: 'Herb', emoji: '🌿', plantingMonth: 7, seedsToStart: '20-25', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '5-10 days', notes: 'Lightly cover seeds. Keep moist.'}, {stage: 'First Harvest', days: '30-40 days', notes: 'Pinch off flower buds. Harvest regularly.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves emerge'}] },
+                { name: 'Cilantro', viability: 'Plant Later', method: 'Direct Sow', window: 'Sep', spacing: 9, maturity: '45-70', notes: 'Cool season. Plant later in the fall. Tolerates down to 10°F.', type: 'Herb', emoji: '🌿', plantingMonth: 9, seedsToStart: '20-25', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep moist. Can be slow.'}, {stage: 'First Harvest', days: '30-40 days', notes: 'Harvest outer leaves. Plant in waves to prevent bolting.'}], feedingSchedule: [{type: 'Nitrogen-rich liquid fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves emerge'}] },
+                { name: 'Fernleaf Dill', viability: 'Plant Later', method: 'Direct Sow', window: 'Early Oct', spacing: 1, maturity: 'N/A (Annual herb)', notes: 'Loves mild weather. Plant later in the fall.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep moist.'}, {stage: 'First Harvest', days: '40-50 days', notes: 'Harvest leaves as needed. Will bolt in heat.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Monthly', stage: 'After establishment'}] },
+                { name: 'Cayenne Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70-75 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🌶️', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-21 days', notes: 'Keep warm (80-85°F).'}, {stage: 'True Leaves', days: '3-4 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '70-75 days after transplant', notes: 'Harvest when peppers are full size and color.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Higher potassium fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
+                { name: 'Santa Fe Grande Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🌶️', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-21 days', notes: 'Keep warm (80-85°F).'}, {stage: 'True Leaves', days: '3-4 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '80-90 days after transplant', notes: 'Harvest when peppers are full size and color.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Higher potassium fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
+                { name: 'Cal Wonder Bell Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '60-80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🫑', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-21 days', notes: 'Keep warm (80-85°F).'}, {stage: 'True Leaves', days: '3-4 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '60-80 days after transplant', notes: 'Harvest when peppers are full size and color.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Higher potassium fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
+                { name: 'Jalapeno Pepper', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70-80 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Frost susceptible.', type: 'Pepper', emoji: '🌶️', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-21 days', notes: 'Keep warm (80-85°F).'}, {stage: 'True Leaves', days: '3-4 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '70-80 days after transplant', notes: 'Harvest when peppers are full size and color.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Higher potassium fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
+                { name: 'Chives', viability: 'Plant Later', method: 'Direct Sow', window: 'Early Oct', spacing: 16, maturity: 'N/A (Perennial)', notes: 'Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '35-45', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep moist.'}, {stage: 'Establishment', days: 'Ongoing', notes: 'Can harvest lightly in first year. Divide clumps every few years.'}], feedingSchedule: [{type: 'Compost tea / Balanced liquid fertilizer', frequency: 'Monthly', stage: 'After establishment'}] },
+                { name: 'Warrior Onion', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 16, maturity: '60 (from direct seed)', notes: 'Cool season. Can stand freezing.', type: 'Root', emoji: '🧅', plantingMonth: 8, seedsToStart: '50-60', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep moist.'}, {stage: 'Thinning', days: '3-4 weeks', notes: 'Thin to final spacing for larger bulbs/bunches.'}, {stage: 'Harvest (Bunching)', days: '60-70 days', notes: 'Harvest green tops as needed.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (higher nitrogen)', frequency: 'Every 2-3 weeks', stage: 'After thinning'}] },
+                { name: 'Sugar Baby Watermelon', viability: 'Gamble', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '70-80', notes: 'Needs strong trellis and vine management. Frost susceptible.', type: 'Other', emoji: '🍉', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-10 days', notes: 'Plant 1 inch deep. Keep moist.'}, {stage: 'Vining', days: '3-4 weeks', notes: 'Train onto trellis immediately. Prune side shoots.'}, {stage: 'First Fruit Set', days: '50-60 days', notes: 'Hand-pollinate if needed. Support developing fruit.'}, {stage: 'Harvest', days: '70-80 days', notes: 'Harvest when ground spot is yellow and tendril is dry.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves emerge'}, {type: 'Higher potassium fertilizer', frequency: 'Every 1-2 weeks', stage: 'Once flowering begins'}] },
             ];
 
             const bedLayouts = {
@@ -291,8 +301,8 @@
                     squareRow: 'A',
                     squareCol: 1,
                     swapOptions: [
-                        { name: 'Broccoli Raab', emoji: '🥦', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Fast-growing, cool-season leafy green. Good companion to basil and marigolds.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' },
-                        { name: 'Swiss Chard', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Hardy, colorful, continuous harvest. Tolerates some heat and cold.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' }
+                        { name: 'Broccoli Raab', emoji: '🥦', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Fast-growing, cool-season leafy green. Good companion to basil and marigolds.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15', maturity: '50-60', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-10 days'}, {stage: 'First Harvest', days: '50-60 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves'}] },
+                        { name: 'Swiss Chard', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Hardy, colorful, continuous harvest. Tolerates some heat and cold.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15', maturity: '50-60', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-14 days'}, {stage: 'First Harvest', days: '50-60 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves'}] }
                     ]
                 },
                 {
@@ -302,8 +312,8 @@
                     squareRow: 'A',
                     squareCol: 2,
                     swapOptions: [
-                        { name: 'Tatsoi', emoji: '🍃', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Quick-growing, very cold hardy Asian green. Good for cut-and-come-again.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' },
-                        { name: 'Bok Choy', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Quick-growing Asian green, good for fall. Plant in Sep.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' }
+                        { name: 'Tatsoi', emoji: '🍃', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Quick-growing, very cold hardy Asian green. Good for cut-and-come-again.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25', maturity: '30-45', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '5-10 days'}, {stage: 'First Harvest', days: '30-45 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves'}] },
+                        { name: 'Bok Choy', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Quick-growing Asian green, good for fall. Plant in Sep.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15', maturity: '45-60', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-10 days'}, {stage: 'First Harvest', days: '45-60 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves'}] }
                     ]
                 },
                 {
@@ -313,8 +323,8 @@
                     squareRow: 'A',
                     squareCol: 3,
                     swapOptions: [
-                        { name: 'Mustard Greens', emoji: '🍃', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Quick, spicy, very cold tolerant. Good for fall greens.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' },
-                        { name: 'Kale (Dwarf)', emoji: '🥬', sfgSpacing: 1, plantingMonth: 9, viability: 'Excellent', notes: 'Very hardy, continuous harvest throughout fall and winter.', type: 'Greens', method: 'Direct Sow', seedsToStart: '3-5' }
+                        { name: 'Mustard Greens', emoji: '🍃', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Quick, spicy, very cold tolerant. Good for fall greens.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25', maturity: '30-45', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '3-7 days'}, {stage: 'First Harvest', days: '30-45 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves'}] },
+                        { name: 'Kale (Dwarf)', emoji: '🥬', sfgSpacing: 1, plantingMonth: 9, viability: 'Excellent', notes: 'Very hardy, continuous harvest throughout fall and winter.', type: 'Greens', method: 'Direct Sow', seedsToStart: '3-5', maturity: '50-70', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days'}, {stage: 'First Harvest', days: '50-70 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 3-4 weeks', stage: 'After true leaves'}] }
                     ]
                 },
                 {
@@ -324,8 +334,8 @@
                     squareRow: 'A',
                     squareCol: 4,
                     swapOptions: [
-                        { name: 'Arugula', emoji: '🌿', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Fast-growing, peppery green. Tolerates light frost.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' },
-                        { name: 'Spinach (Extra)', emoji: '🍃', sfgSpacing: 9, plantingMonth: 8, viability: 'Excellent', notes: 'More of your existing spinach. Reliable cool-season crop.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' }
+                        { name: 'Arugula', emoji: '🌿', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Fast-growing, peppery green. Tolerates light frost.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25', maturity: '20-30', successionWaves: 4, successionInterval: '1-2 weeks', growthStages: [{stage: 'Germination', days: '3-7 days'}, {stage: 'First Harvest', days: '20-30 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves'}] },
+                        { name: 'Spinach (Extra)', emoji: '🍃', sfgSpacing: 9, plantingMonth: 8, viability: 'Excellent', notes: 'More of your existing spinach. Reliable cool-season crop.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25', maturity: '25-50', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '5-9 days'}, {stage: 'Baby Leaf Harvest', days: '25-30 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves'}] }
                     ]
                 },
                 {
@@ -335,8 +345,8 @@
                     squareRow: 'B',
                     squareCol: 1,
                     swapOptions: [
-                        { name: 'Radishes (Extra)', emoji: '🌶️', sfgSpacing: 16, plantingMonth: 10, viability: 'Excellent', notes: 'More of your existing radishes. Very fast, good for succession.', type: 'Root', method: 'Direct Sow', seedsToStart: '20-25' },
-                        { name: 'Carrots (Extra)', emoji: '🥕', sfgSpacing: 16, plantingMonth: 9, viability: 'Excellent', notes: 'More of your existing carrots. Reliable cool-season root crop.', type: 'Root', method: 'Direct Sow', seedsToStart: '40-50' }
+                        { name: 'Radishes (Extra)', emoji: '🌶️', sfgSpacing: 16, plantingMonth: 10, viability: 'Excellent', notes: 'More of your existing radishes. Very fast, good for succession.', type: 'Root', method: 'Direct Sow', seedsToStart: '20-25', maturity: '22-35', successionWaves: 4, successionInterval: '1-2 weeks', growthStages: [{stage: 'Germination', days: '3-7 days'}, {stage: 'Harvest', days: '22-35 days'}], feedingSchedule: [{type: 'None/Minimal', frequency: 'N/A', stage: 'Generally not required'}] },
+                        { name: 'Carrots (Extra)', emoji: '🥕', sfgSpacing: 16, plantingMonth: 9, viability: 'Excellent', notes: 'More of your existing carrots. Reliable cool-season root crop.', type: 'Root', method: 'Direct Sow', seedsToStart: '40-50', maturity: '65-75', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-21 days'}, {stage: 'Harvest', days: '65-75 days'}], feedingSchedule: [{type: 'Balanced fertilizer (low nitrogen)', frequency: 'Every 3-4 weeks', stage: 'After thinning'}] }
                     ]
                 },
                 {
@@ -346,8 +356,8 @@
                     squareRow: 'B',
                     squareCol: 2,
                     swapOptions: [
-                        { name: 'Lettuce (Extra)', emoji: '🥬', sfgSpacing: 4, plantingMonth: 8, viability: 'Excellent', notes: 'More of your existing lettuce. Good for fall greens.', type: 'Greens', method: 'Direct Sow', seedsToStart: '15-20' },
-                        { name: 'Cilantro (Extra)', emoji: '🌿', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'More of your existing cilantro. Cool-season herb.', type: 'Herb', method: 'Direct Sow', seedsToStart: '20-25' }
+                        { name: 'Lettuce (Extra)', emoji: '🥬', sfgSpacing: 4, plantingMonth: 8, viability: 'Excellent', notes: 'More of your existing lettuce. Good for fall greens.', type: 'Greens', method: 'Direct Sow', seedsToStart: '15-20', maturity: '25-55', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '7-10 days'}, {stage: 'Baby Leaf Harvest', days: '25-30 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves'}] },
+                        { name: 'Cilantro (Extra)', emoji: '🌿', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'More of your existing cilantro. Cool-season herb.', type: 'Herb', method: 'Direct Sow', seedsToStart: '20-25', maturity: '45-70', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '7-14 days'}, {stage: 'First Harvest', days: '30-40 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves'}] }
                     ]
                 },
                 // 4x2 Bed 1 (Warm Season)
@@ -358,8 +368,8 @@
                     squareRow: 'A',
                     squareCol: 1,
                     swapOptions: [
-                        { name: 'Bush Beans (Green)', emoji: '🫘', sfgSpacing: 9, plantingMonth: 7, viability: 'Good', notes: 'Reliable, nitrogen fixer. Good for succession planting.', type: 'Bean', method: 'Direct Sow', seedsToStart: '20-25' },
-                        { name: 'Pickling Cucumber (Extra)', emoji: '🥒', sfgSpacing: 2, plantingMonth: 7, viability: 'Good', notes: 'Extend your cucumber harvest. Needs trellis.', type: 'Cucumber', method: 'Direct Sow', seedsToStart: '5-7' }
+                        { name: 'Bush Beans (Green)', emoji: '🫘', sfgSpacing: 9, plantingMonth: 7, viability: 'Good', notes: 'Reliable, nitrogen fixer. Good for succession planting.', type: 'Bean', method: 'Direct Sow', seedsToStart: '20-25', maturity: '55-60', successionWaves: 2, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '7-10 days'}, {stage: 'First Harvest', days: '55-60 days'}], feedingSchedule: [{type: 'Balanced fertilizer (low nitrogen)', frequency: 'Every 3-4 weeks', stage: 'After flowering'}] },
+                        { name: 'Pickling Cucumber (Extra)', emoji: '🥒', sfgSpacing: 2, plantingMonth: 7, viability: 'Good', notes: 'Extend your cucumber harvest. Needs trellis.', type: 'Cucumber', method: 'Direct Sow', seedsToStart: '5-7', maturity: '45-53', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '3-10 days'}, {stage: 'First Fruit Set', days: '35-40 days'}], feedingSchedule: [{type: 'Balanced fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves'}, {type: 'Higher potassium fertilizer', frequency: 'Every 1-2 weeks', stage: 'Once flowering'}] }
                     ]
                 },
                 {
@@ -369,8 +379,8 @@
                     squareRow: 'A',
                     squareCol: 4,
                     swapOptions: [
-                        { name: 'Malabar Spinach', emoji: '🌿', sfgSpacing: 1, plantingMonth: 7, viability: 'Good', notes: 'Heat-tolerant vining green. Needs trellis.', type: 'Greens', method: 'Direct Sow', seedsToStart: '3-5' },
-                        { name: 'Sugar Snap Peas (Extra)', emoji: '🫛', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Reliable cool-season vining crop. Nitrogen fixer. Plant in Sep.', type: 'Pea', method: 'Direct Sow', seedsToStart: '40-50' }
+                        { name: 'Malabar Spinach', emoji: '🌿', sfgSpacing: 1, plantingMonth: 7, viability: 'Good', notes: 'Heat-tolerant vining green. Needs trellis.', type: 'Greens', method: 'Direct Sow', seedsToStart: '3-5', maturity: '30-40', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days'}, {stage: 'First Harvest', days: '30-40 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves'}] },
+                        { name: 'Sugar Snap Peas (Extra)', emoji: '🫛', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Reliable cool-season vining crop. Nitrogen fixer. Plant in Sep.', type: 'Pea', method: 'Direct Sow', seedsToStart: '40-50', maturity: '60-80', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-14 days'}, {stage: 'First Harvest', days: '60-80 days'}], feedingSchedule: [{type: 'Balanced fertilizer (low nitrogen)', frequency: 'Every 3-4 weeks', stage: 'After flowering'}] }
                     ]
                 },
                 // 8x1 Bed 1 (Vining Crops)
@@ -381,8 +391,8 @@
                     squareRow: 'A', 
                     squareCol: 7,
                     swapOptions: [
-                        { name: 'Malabar Spinach', emoji: '🌿', sfgSpacing: 1, plantingMonth: 7, viability: 'Good', notes: 'Heat-tolerant vining green. Needs trellis.', type: 'Greens', method: 'Direct Sow', seedsToStart: '3-5' },
-                        { name: 'Armenian Cucumber (Extra)', emoji: '🥒', sfgSpacing: 2, plantingMonth: 7, viability: 'Good', notes: 'Reliable vining cucumber. Needs trellis.', type: 'Cucumber', method: 'Direct Sow', seedsToStart: '5-7' }
+                        { name: 'Malabar Spinach', emoji: '🌿', sfgSpacing: 1, plantingMonth: 7, viability: 'Good', notes: 'Heat-tolerant vining green. Needs trellis.', type: 'Greens', method: 'Direct Sow', seedsToStart: '3-5', maturity: '30-40', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days'}, {stage: 'First Harvest', days: '30-40 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves'}] },
+                        { name: 'Armenian Cucumber (Extra)', emoji: '🥒', sfgSpacing: 2, plantingMonth: 7, viability: 'Good', notes: 'Reliable vining cucumber. Needs trellis.', type: 'Cucumber', method: 'Direct Sow', seedsToStart: '5-7', maturity: '60-75', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '3-10 days'}, {stage: 'First Fruit Set', days: '50-60 days'}], feedingSchedule: [{type: 'Balanced fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves'}, {type: 'Higher potassium fertilizer', frequency: 'Every 1-2 weeks', stage: 'Once flowering'}] }
                     ]
                 },
                 // 6x2 Bed 1 (Mixed Production)
@@ -393,8 +403,8 @@
                     squareRow: 'A',
                     squareCol: 1,
                     swapOptions: [
-                        { name: 'Swiss Chard', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Hardy, colorful, continuous harvest. Tolerates some heat and cold.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' },
-                        { name: 'Bok Choy', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Quick-growing Asian green, good for fall. Plant in Sep.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' }
+                        { name: 'Swiss Chard', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Hardy, colorful, continuous harvest. Tolerates some heat and cold.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15', maturity: '50-60', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-14 days'}, {stage: 'First Harvest', days: '50-60 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves'}] },
+                        { name: 'Bok Choy', emoji: '🥬', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Quick-growing Asian green, good for fall. Plant in Sep.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15', maturity: '45-60', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-10 days'}, {stage: 'First Harvest', days: '45-60 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves'}] }
                     ]
                 },
                 {
@@ -404,8 +414,8 @@
                     squareRow: 'A',
                     squareCol: 2,
                     swapOptions: [
-                        { name: 'Broccoli Raab', emoji: '🥦', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Fast-growing, cool-season leafy green. Good companion to basil and marigolds.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15' },
-                        { name: 'Mustard Greens', emoji: '🍃', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Quick, spicy, very cold tolerant. Good for fall greens.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25' }
+                        { name: 'Broccoli Raab', emoji: '🥦', sfgSpacing: 4, plantingMonth: 9, viability: 'Excellent', notes: 'Fast-growing, cool-season leafy green. Good companion to basil and marigolds.', type: 'Greens', method: 'Direct Sow', seedsToStart: '10-15', maturity: '50-60', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-10 days'}, {stage: 'First Harvest', days: '50-60 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves'}] },
+                        { name: 'Mustard Greens', emoji: '🍃', sfgSpacing: 9, plantingMonth: 9, viability: 'Excellent', notes: 'Quick, spicy, very cold tolerant. Good for fall greens.', type: 'Greens', method: 'Direct Sow', seedsToStart: '20-25', maturity: '30-45', successionWaves: 3, successionInterval: '2 weeks', growthStages: [{stage: 'Germination', days: '3-7 days'}, {stage: 'First Harvest', days: '30-45 days'}], feedingSchedule: [{type: 'Nitrogen-rich fertilizer', frequency: 'Every 2 weeks', stage: 'After true leaves'}] }
                     ]
                 }
             ];
@@ -418,6 +428,9 @@
             const actionPlanContainer = document.getElementById('action-plan-container');
             const resetFilterBtn = document.getElementById('reset-filter-btn');
             const swapSuggestionsContainer = document.getElementById('swap-suggestions-container');
+            const actionPlanFilters = document.getElementById('action-plan-filters');
+
+            let currentActionPlanFilter = 'All'; // Default filter for action plan
 
             const viabilityClasses = {
                 'Good': 'border-green-accent',
@@ -490,6 +503,22 @@
                         <h4 class="font-semibold mt-2">Notes:</h4>
                         <p>${plant.notes}</p>
                     </div>
+                    ${plant.growthStages && plant.growthStages.length > 0 ? `
+                    <div class="mt-4">
+                        <h4 class="font-semibold">Growth Milestones:</h4>
+                        <ul class="list-disc pl-5 space-y-1">
+                            ${plant.growthStages.map(stage => `<li><strong>${stage.stage}:</strong> ${stage.days} - ${stage.notes}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    ${plant.feedingSchedule && plant.feedingSchedule.length > 0 ? `
+                    <div class="mt-4">
+                        <h4 class="font-semibold">Feeding Schedule:</h4>
+                        <ul class="list-disc pl-5 space-y-1">
+                            ${plant.feedingSchedule.map(feed => `<li><strong>${feed.stage}:</strong> ${feed.type} (${feed.frequency})</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
                 `;
                 modal.style.display = 'flex';
             }
@@ -552,7 +581,7 @@
                 });
             }
 
-            function generatePhaseContent(phase) {
+            function generatePhaseContent(phase, filterType = 'All') {
                 let contentHtml = '<ul class="list-disc pl-5 space-y-2">';
                 let plantsForPhase = [];
 
@@ -563,16 +592,34 @@
                         <li><strong>Warm-Season Seed Starting (Indoors - High Risk/Gamble):</strong> Start the following seeds indoors immediately on a heat mat (70-85°F). Note: Purchasing transplants is highly recommended for a better fall harvest.
                             <ul class="list-circle pl-5 mt-2">
                     `;
-                    plantsForPhase.filter(p => p.method.includes('Start Indoors')).forEach(plant => {
-                        contentHtml += `<li>${plant.name}: Start ${plant.seedsToStart} seeds</li>`;
+                    plantsForPhase.filter(p => p.method.includes('Start Indoors') && (filterType === 'All' || p.type === filterType || (filterType === 'Fruiting' && (p.type === 'Tomato' || p.type === 'Pepper' || p.type === 'Squash' || p.type === 'Cucumber')))).forEach(plant => {
+                        contentHtml += `<li>${plant.name}: Start ${plant.seedsToStart} seeds`;
+                        if (plant.successionWaves && plant.successionWaves > 1) {
+                            contentHtml += ` (in ${plant.successionWaves} waves, every ${plant.successionInterval})`;
+                        }
+                        contentHtml += `
+                            <ul class="list-square pl-5 mt-1 text-sm text-gray-600">
+                                ${plant.growthStages ? plant.growthStages.map(stage => `<li><strong>${stage.stage}:</strong> ${stage.days} - ${stage.notes}</li>`).join('') : ''}
+                                ${plant.feedingSchedule ? plant.feedingSchedule.map(feed => `<li><strong>Feed (${feed.stage}):</strong> ${feed.type} (${feed.frequency})</li>`).join('') : ''}
+                            </ul>
+                        </li>`;
                     });
                     contentHtml += `</ul></li>`;
                     contentHtml += `
                         <li><strong>Immediate Direct Sowing (Outdoors):</strong> Plant seeds for the following:
                             <ul class="list-circle pl-5 mt-2">
                     `;
-                    plantsForPhase.filter(p => p.method.includes('Direct Sow')).forEach(plant => {
-                        contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds</li>`;
+                    plantsForPhase.filter(p => p.method.includes('Direct Sow') && (filterType === 'All' || p.type === filterType || (filterType === 'Fruiting' && (p.type === 'Tomato' || p.type === 'Pepper' || p.type === 'Squash' || p.type === 'Cucumber')))).forEach(plant => {
+                        contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds`;
+                        if (plant.successionWaves && plant.successionWaves > 1) {
+                            contentHtml += ` (in ${plant.successionWaves} waves, every ${plant.successionInterval})`;
+                        }
+                        contentHtml += `
+                            <ul class="list-square pl-5 mt-1 text-sm text-gray-600">
+                                ${plant.growthStages ? plant.growthStages.map(stage => `<li><strong>${stage.stage}:</strong> ${stage.days} - ${stage.notes}</li>`).join('') : ''}
+                                ${plant.feedingSchedule ? plant.feedingSchedule.map(feed => `<li><strong>Feed (${feed.stage}):</strong> ${feed.type} (${feed.frequency})</li>`).join('') : ''}
+                            </ul>
+                        </li>`;
                     });
                     contentHtml += `
                             </ul>
@@ -584,15 +631,33 @@
                     contentHtml += `<li><strong>Late August - Mid-September Sowing:</strong> Direct sow the following:
                             <ul class="list-circle pl-5 mt-2">
                     `;
-                    plantsForPhase.filter(p => p.plantingMonth === 8 || p.plantingMonth === 9).forEach(plant => {
-                        contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds</li>`;
+                    plantsForPhase.filter(p => (p.plantingMonth === 8 || p.plantingMonth === 9) && (filterType === 'All' || p.type === filterType || (filterType === 'Fruiting' && (p.type === 'Tomato' || p.type === 'Pepper' || p.type === 'Squash' || p.type === 'Cucumber')))).forEach(plant => {
+                        contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds`;
+                        if (plant.successionWaves && plant.successionWaves > 1) {
+                            contentHtml += ` (in ${plant.successionWaves} waves, every ${plant.successionInterval})`;
+                        }
+                        contentHtml += `
+                            <ul class="list-square pl-5 mt-1 text-sm text-gray-600">
+                                ${plant.growthStages ? plant.growthStages.map(stage => `<li><strong>${stage.stage}:</strong> ${stage.days} - ${stage.notes}</li>`).join('') : ''}
+                                ${plant.feedingSchedule ? plant.feedingSchedule.map(feed => `<li><strong>Feed (${feed.stage}):</strong> ${feed.type} (${feed.frequency})</li>`).join('') : ''}
+                            </ul>
+                        </li>`;
                     });
                     contentHtml += `</ul></li>`;
                     contentHtml += `<li><strong>Mid-September - Early October Sowing:</strong> Direct sow the following:
                             <ul class="list-circle pl-5 mt-2">
                     `;
-                    plantsForPhase.filter(p => p.plantingMonth === 10).forEach(plant => {
-                        contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds</li>`;
+                    plantsForPhase.filter(p => p.plantingMonth === 10 && (filterType === 'All' || p.type === filterType || (filterType === 'Fruiting' && (p.type === 'Tomato' || p.type === 'Pepper' || p.type === 'Squash' || p.type === 'Cucumber')))).forEach(plant => {
+                        contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds`;
+                        if (plant.successionWaves && plant.successionWaves > 1) {
+                            contentHtml += ` (in ${plant.successionWaves} waves, every ${plant.successionInterval})`;
+                        }
+                        contentHtml += `
+                            <ul class="list-square pl-5 mt-1 text-sm text-gray-600">
+                                ${plant.growthStages ? plant.growthStages.map(stage => `<li><strong>${stage.stage}:</strong> ${stage.days} - ${stage.notes}</li>`).join('') : ''}
+                                ${plant.feedingSchedule ? plant.feedingSchedule.map(feed => `<li><strong>Feed (${feed.stage}):</strong> ${feed.type} (${feed.frequency})</li>`).join('') : ''}
+                            </ul>
+                        </li>`;
                     });
                     contentHtml += `
                             </ul>
@@ -606,8 +671,17 @@
                         <li><strong>Succession Planting:</strong> As you harvest, amend the empty square with compost and re-sow with more fast-growing greens or radishes.
                             <ul class="list-circle pl-5 mt-2">
                     `;
-                    plantsForPhase.filter(p => (p.name.includes('Radishes') || p.name.includes('Lettuce') || p.name.includes('Spinach')) && (p.plantingMonth === 10 || p.plantingMonth === 11)).forEach(plant => {
-                         contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds (Late Oct-Early Nov)</li>`;
+                    plantsForPhase.filter(p => (p.name.includes('Radishes') || p.name.includes('Lettuce') || p.name.includes('Spinach')) && (p.plantingMonth === 10 || p.plantingMonth === 11) && (filterType === 'All' || p.type === filterType || (filterType === 'Fruiting' && (p.type === 'Tomato' || p.type === 'Pepper' || p.type === 'Squash' || p.type === 'Cucumber')))).forEach(plant => {
+                         contentHtml += `<li>${plant.name}: Sow ${plant.seedsToStart} seeds (Late Oct-Early Nov)`;
+                         if (plant.successionWaves && plant.successionWaves > 1) {
+                            contentHtml += ` (in ${plant.successionWaves} waves, every ${plant.successionInterval})`;
+                        }
+                         contentHtml += `
+                            <ul class="list-square pl-5 mt-1 text-sm text-gray-600">
+                                ${plant.growthStages ? plant.growthStages.map(stage => `<li><strong>${stage.stage}:</strong> ${stage.days} - ${stage.notes}</li>`).join('') : ''}
+                                ${plant.feedingSchedule ? plant.feedingSchedule.map(feed => `<li><strong>Feed (${feed.stage}):</strong> ${feed.type} (${feed.frequency})</li>`).join('') : ''}
+                            </ul>
+                        </li>`;
                     });
                     contentHtml += `
                             </ul>
@@ -617,7 +691,12 @@
                         <li><strong>Frost Protection:</strong> As December approaches, monitor weather forecasts. Be ready to cover tender plants (tomatoes, peppers, basil, etc.) with frost cloth on cold nights.</li>
                         <li><strong>Final Harvests:</strong> Harvest all remaining frost-susceptible crops before a hard freeze. After the first frost, sow your Blue Milkweed seeds for spring germination.
                             <ul class="list-circle pl-5 mt-2">
-                                <li>Blue Milkweed: Sow ${plantData.find(p => p.name === 'Blue Milkweed')?.seedsToStart || 'N/A'} seeds (After first frost in Dec)</li>
+                                <li>Blue Milkweed: Sow ${plantData.find(p => p.name === 'Blue Milkweed')?.seedsToStart || 'N/A'} seeds (After first frost in Dec)
+                                    <ul class="list-square pl-5 mt-1 text-sm text-gray-600">
+                                        ${plantData.find(p => p.name === 'Blue Milkweed')?.growthStages ? plantData.find(p => p.name === 'Blue Milkweed').growthStages.map(stage => `<li><strong>${stage.stage}:</strong> ${stage.days} - ${stage.notes}</li>`).join('') : ''}
+                                        ${plantData.find(p => p.name === 'Blue Milkweed')?.feedingSchedule ? plantData.find(p => p.name === 'Blue Milkweed').feedingSchedule.map(feed => `<li><strong>Feed (${feed.stage}):</strong> ${feed.type} (${feed.frequency})</li>`).join('') : ''}
+                                    </ul>
+                                </li>
                             </ul>
                         </li>
                     `;
@@ -626,7 +705,7 @@
                 return contentHtml;
             }
 
-            function renderActionPlan() {
+            function renderActionPlan(filterType = 'All') {
                 actionPlanContainer.innerHTML = '';
                 const titles = [
                     'Phase 1: Immediate Preparations (Late July - Mid-August)',
@@ -642,7 +721,7 @@
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
                         <div class="accordion-content">
-                            <div class="p-4 border-t border-gray-200 text-gray-700">${generatePhaseContent(index + 1)}</div>
+                            <div class="p-4 border-t border-gray-200 text-gray-700">${generatePhaseContent(index + 1, filterType)}</div>
                         </div>
                     `;
                     actionPlanContainer.appendChild(div);
@@ -813,7 +892,12 @@
                                             data-new-plant-notes="${option.notes}"
                                             data-new-plant-type="${option.type}"
                                             data-new-plant-method="${option.method}"
-                                            data-new-plant-seedstostart="${option.seedsToStart}">
+                                            data-new-plant-seedstostart="${option.seedsToStart}"
+                                            data-new-plant-maturity="${option.maturity}"
+                                            data-new-plant-successionwaves="${option.successionWaves}"
+                                            data-new-plant-successioninterval="${option.successionInterval}"
+                                            data-new-plant-growthstages='${JSON.stringify(option.growthStages)}'
+                                            data-new-plant-feedingschedule='${JSON.stringify(option.feedingSchedule)}'>
                                         Apply Swap
                                     </button>
                                 </div>
@@ -836,7 +920,11 @@
                             type: btnData.newPlantType,
                             method: btnData.newPlantMethod,
                             seedsToStart: btnData.newPlantSeedstostart,
-                            maturity: 'N/A' // Default for new plants if not specified
+                            maturity: btnData.newPlantMaturity,
+                            successionWaves: parseInt(btnData.newPlantSuccessionwaves),
+                            successionInterval: btnData.newPlantSuccessioninterval,
+                            growthStages: JSON.parse(btnData.newPlantGrowthstages),
+                            feedingSchedule: JSON.parse(btnData.newPlantFeedingschedule)
                         };
                         applySwap(btnData.originalPlantName, btnData.bedType, btnData.bedName, btnData.squareRow, parseInt(btnData.squareCol), newPlantData);
                     });
@@ -845,39 +933,31 @@
 
             function applySwap(originalPlantName, bedType, bedName, squareRow, squareCol, newPlantData) {
                 // Find the specific bed
-                const bedIndex = bedLayouts[bedType].findIndex(bed => bed.name === bedName);
-                if (bedIndex === -1) return;
+                const bed = bedLayouts[bedType].find(b => b.name === bedName);
+                if (!bed) {
+                    console.error('Could not find bed:', bedName, bedType);
+                    return;
+                }
 
-                // Find the specific square within that bed
-                const squareIndex = bedLayouts[bedType][bedIndex].squares.findIndex(s => {
-                    // Convert 'A' to 0, 'B' to 1 for row index
-                    const rowIndex = squareRow.charCodeAt(0) - 'A'.charCodeAt(0);
-                    const currentSquareRow = String.fromCharCode('A'.charCodeAt(0) + Math.floor(s.count / (bedLayouts[bedType][bedIndex].grid === 'grid-cols-4' ? 4 : bedLayouts[bedType][bedIndex].grid === 'grid-cols-6' ? 6 : 8)));
-                    const currentSquareCol = (s.count % (bedLayouts[bedType][bedIndex].grid === 'grid-cols-4' ? 4 : bedLayouts[bedType][bedIndex].grid === 'grid-cols-6' ? 6 : 8)) + 1;
-                    // This logic is tricky, better to directly map square index to row/col if possible.
-                    // For simplicity, let's assume the squares array is ordered row by row, then column by column.
-                    // This means for a 4x2 grid (8 squares), A1 is index 0, A2 is 1, A3 is 2, A4 is 3, B1 is 4, etc.
-                    let targetSquareIndex = -1;
-                    if (bedType === '4x2') { // 2 rows, 4 cols
-                        targetSquareIndex = (squareRow === 'A' ? 0 : 1) * 4 + (squareCol - 1);
-                    } else if (bedType === '6x2') { // 2 rows, 6 cols
-                        targetSquareIndex = (squareRow === 'A' ? 0 : 1) * 6 + (squareCol - 1);
-                    } else if (bedType === '8x1') { // 1 row, 8 cols
-                        targetSquareIndex = (squareCol - 1); // Row 'A' is implied
-                    }
+                // Calculate the target square index based on row/column and grid size
+                let targetSquareIndex = -1;
+                if (bedType === '4x2') { // 2 rows, 4 cols per row
+                    targetSquareIndex = (squareRow === 'A' ? 0 : 1) * 4 + (squareCol - 1);
+                } else if (bedType === '6x2') { // 2 rows, 6 cols per row
+                    targetSquareIndex = (squareRow === 'A' ? 0 : 1) * 6 + (squareCol - 1);
+                } else if (bedType === '8x1') { // 1 row, 8 cols per row
+                    targetSquareIndex = (squareCol - 1);
+                }
 
-                    return bedLayouts[bedType][bedIndex].squares.indexOf(s) === targetSquareIndex;
-                });
-
-                if (squareIndex === -1) {
-                    console.error('Could not find square to swap:', bedType, bedName, squareRow, squareCol);
+                if (targetSquareIndex === -1 || targetSquareIndex >= bed.squares.length) {
+                    console.error('Calculated square index is out of bounds or invalid for bed:', bedName, squareRow, squareCol, targetSquareIndex);
                     return;
                 }
 
                 // Update the bed layout
-                bedLayouts[bedType][bedIndex].squares[squareIndex].plant = newPlantData.name;
-                bedLayouts[bedType][bedIndex].squares[squareIndex].count = newPlantData.spacing;
-                bedLayouts[bedType][bedIndex].squares[squareIndex].month = newPlantData.plantingMonth;
+                bed.squares[targetSquareIndex].plant = newPlantData.name;
+                bed.squares[targetSquareIndex].count = newPlantData.spacing;
+                bed.squares[targetSquareIndex].month = newPlantData.plantingMonth;
 
                 // Add new plant to plantData if it doesn't exist (unless it's an "Extra" of an existing plant)
                 const isExtraOfExisting = newPlantData.name.includes('(Extra)');
@@ -886,20 +966,19 @@
                     plantData.push(newPlantData);
                 } else if (existingPlant && isExtraOfExisting) {
                     // If it's an "Extra" but the base plant doesn't exist, remove the "(Extra)" and add it.
-                    // This handles cases where the base plant might have been removed or never existed.
                     const basePlantName = newPlantData.name.replace(' (Extra)', '');
                     if (!plantData.find(p => p.name === basePlantName)) {
-                        plantData.push({ ...newPlantData, name: basePlantName });
+                        plantData.push({ ...newPlantData, name: basePlantName, viability: newPlantData.viability.replace(' (Extra)', '') });
                     }
                 }
 
                 // Re-render affected sections
-                renderBedLayouts(bedType);
+                renderBedLayouts(bedType); // Re-render the specific bed type that was changed
                 renderPlantLibrary();
                 renderTimelineChart(); // Re-render chart to include new plants if added
-                renderActionPlan(); // Re-render action plan as it's now dynamic
+                renderActionPlan(currentActionPlanFilter); // Re-render action plan with current filter
                 
-                // Optionally, remove the applied swap suggestion from the list
+                // Remove the applied swap suggestion from the list
                 const swapIndex = swapSuggestions.findIndex(s => 
                     s.originalPlantName === originalPlantName &&
                     s.bedType === bedType &&
@@ -915,6 +994,20 @@
                 alert(`Successfully swapped ${originalPlantName} with ${newPlantData.name} in ${bedName} (${bedType}) at square ${squareRow}${squareCol}!`);
             }
 
+            // Setup action plan filters
+            actionPlanFilters.querySelectorAll('.filter-action-plan-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    currentActionPlanFilter = event.target.dataset.filter;
+                    actionPlanFilters.querySelectorAll('.filter-action-plan-btn').forEach(btn => {
+                        btn.classList.remove('bg-green-accent', 'text-white');
+                        btn.classList.add('bg-secondary');
+                    });
+                    event.target.classList.remove('bg-secondary');
+                    event.target.classList.add('bg-green-accent', 'text-white');
+                    renderActionPlan(currentActionPlanFilter);
+                });
+            });
+
 
             resetFilterBtn.addEventListener('click', () => {
                 renderPlantLibrary();
@@ -924,7 +1017,7 @@
             setupBedSelectors();
             renderBedLayouts('4x2'); // Initial render for 4x2 beds
             renderSwapSuggestions();
-            renderActionPlan();
+            renderActionPlan(currentActionPlanFilter); // Initial render of action plan
             renderTimelineChart();
             setupNavbar();
         });
