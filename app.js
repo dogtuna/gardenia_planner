@@ -238,6 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const locationDisplay = document.getElementById('location-display');
     const zoneDisplay = document.getElementById('zone-display');
+    const firstFrostDisplay = document.getElementById('first-frost-display');
     const editLocationBtn = document.getElementById('edit-location-btn');
     const locationFormModal = document.getElementById('locationFormModal');
     const zipInput = document.getElementById('zip-input');
@@ -271,6 +272,26 @@ document.addEventListener('DOMContentLoaded', function() {
         "04101": {city: "Portland", state: "ME", zone: "5b"},
     };
 
+
+    async function lookupFrostDate(lat, lon) {
+        try {
+            const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
+            if (!stationRes.ok) throw new Error('Station lookup failed');
+            const stations = await stationRes.json();
+            if (!Array.isArray(stations) || stations.length === 0) throw new Error('No station');
+            const station = stations[0].id;
+            const frostRes = await fetch(`https://api.farmsense.net/v1/frostdates/probabilities/?station=${station}&season=1`);
+            if (!frostRes.ok) throw new Error('Frost lookup failed');
+            const frostJson = await frostRes.json();
+            const info = frostJson[0];
+            return info && (info.prob_50 || info.prob_70 || info.prob_90 || info.date);
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
+
+
     async function lookupZip(zip) {
         try {
             const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
@@ -284,10 +305,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const place = locJson.places && locJson.places[0];
             if (!place) throw new Error('No city found');
 
+
+            const frost = await lookupFrostDate(place.latitude, place.longitude);
+
             return {
                 city: place['place name'],
                 state: place['state abbreviation'],
-                zone: zoneJson.zone
+                zone: zoneJson.zone,
+                firstFrost: frost,
+                lat: place.latitude,
+                lon: place.longitude
+
             };
         } catch (err) {
             console.error(err);
@@ -295,7 +323,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    const defaultLocation = {zip: "77316", ...zipData["77316"]};
+
+    const defaultLocation = {zip: "77316", city: "Montgomery", state: "TX", zone: "9a", firstFrost: "Dec 1 - 10"};
+
     let userLocation = {...defaultLocation};
 
     function loadData() {
@@ -335,6 +365,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateLocationUI() {
         locationDisplay.textContent = `${userLocation.city}, ${userLocation.state}`;
         zoneDisplay.textContent = `USDA Zone ${userLocation.zone}`;
+        if (userLocation.firstFrost) {
+            firstFrostDisplay.textContent = userLocation.firstFrost;
+        }
         zipInput.value = userLocation.zip || '';
     }
 
