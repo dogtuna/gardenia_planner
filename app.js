@@ -235,6 +235,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const bedNameInput = document.getElementById('bed-name');
     const bedColsInput = document.getElementById('bed-cols');
     const bedRowsInput = document.getElementById('bed-rows');
+
+    const locationDisplay = document.getElementById('location-display');
+    const zoneDisplay = document.getElementById('zone-display');
+    const editLocationBtn = document.getElementById('edit-location-btn');
+    const editLocationForm = document.getElementById('edit-location-form');
+    const zipInput = document.getElementById('zip-input');
+    const saveLocationBtn = document.getElementById('save-location-btn');
     let editPlantIndex = null;
     let editBedType = null;
     let editBedIndex = null;
@@ -244,6 +251,28 @@ document.addEventListener('DOMContentLoaded', function() {
     let seedsToOrder = [];
 
     let actionPlanData = { filter: 'All' };
+
+    const zipData = {
+        "77316": {city: "Montgomery", state: "TX", zone: "9a"},
+        "10001": {city: "New York", state: "NY", zone: "7b"},
+        "90210": {city: "Beverly Hills", state: "CA", zone: "10b"},
+        "33109": {city: "Miami Beach", state: "FL", zone: "11a"},
+        "60601": {city: "Chicago", state: "IL", zone: "6a"},
+        "80202": {city: "Denver", state: "CO", zone: "5b"},
+        "98101": {city: "Seattle", state: "WA", zone: "8b"},
+        "85001": {city: "Phoenix", state: "AZ", zone: "9b"},
+        "55401": {city: "Minneapolis", state: "MN", zone: "4b"},
+        "97201": {city: "Portland", state: "OR", zone: "8b"},
+        "27601": {city: "Raleigh", state: "NC", zone: "7b"},
+        "75201": {city: "Dallas", state: "TX", zone: "8b"},
+        "02108": {city: "Boston", state: "MA", zone: "6b"},
+        "84101": {city: "Salt Lake City", state: "UT", zone: "7a"},
+        "96813": {city: "Honolulu", state: "HI", zone: "11b"},
+        "04101": {city: "Portland", state: "ME", zone: "5b"},
+    };
+
+    const defaultLocation = {zip: "77316", ...zipData["77316"]};
+    let userLocation = {...defaultLocation};
 
     function loadData() {
         const storedPlants = localStorage.getItem('plantLibrary');
@@ -265,6 +294,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (storedSeeds) {
             seedsToOrder = JSON.parse(storedSeeds);
         }
+        const storedLocation = localStorage.getItem('userLocation');
+        if (storedLocation) {
+            userLocation = JSON.parse(storedLocation);
+        }
     }
 
     function saveData() {
@@ -272,10 +305,18 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('bedLayouts', JSON.stringify(bedLayouts));
         localStorage.setItem('actionPlan', JSON.stringify(actionPlanData));
         localStorage.setItem('seedList', JSON.stringify(seedsToOrder));
+        localStorage.setItem('userLocation', JSON.stringify(userLocation));
+    }
+
+    function updateLocationUI() {
+        locationDisplay.textContent = `${userLocation.city}, ${userLocation.state}`;
+        zoneDisplay.textContent = `USDA Zone ${userLocation.zone}`;
+        zipInput.value = userLocation.zip || '';
     }
 
     loadData();
     currentBedType = Object.keys(bedLayouts)[0] || currentBedType;
+    updateLocationUI();
 
     const viabilityClasses = {
         'Good': 'border-green-accent',
@@ -1131,6 +1172,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     downloadSeedsBtn.addEventListener('click', () => {
         downloadSeedsList();
+    });
+
+    editLocationBtn.addEventListener('click', () => {
+        editLocationForm.classList.toggle('hidden');
+    });
+
+    saveLocationBtn.addEventListener('click', () => {
+        const zip = zipInput.value.trim();
+        if (zipData[zip]) {
+            userLocation = {zip, ...zipData[zip]};
+            updateLocationUI();
+            editLocationForm.classList.add('hidden');
+            saveData();
+        } else {
+            alert('ZIP code not available.');
+        }
     });
 
     bedForm.addEventListener('submit', (e) => {
