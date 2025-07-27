@@ -239,6 +239,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const locationDisplay = document.getElementById('location-display');
     const zoneDisplay = document.getElementById('zone-display');
     const firstFrostDisplay = document.getElementById('first-frost-display');
+    const totalSpaceDisplay = document.getElementById('total-space-display');
+    const bedCountDisplay = document.getElementById('bed-count-display');
+
     const editLocationBtn = document.getElementById('edit-location-btn');
     const locationFormModal = document.getElementById('locationFormModal');
     const zipInput = document.getElementById('zip-input');
@@ -271,8 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
         "96813": {city: "Honolulu", state: "HI", zone: "11b"},
         "04101": {city: "Portland", state: "ME", zone: "5b"},
     };
-
-
+  
     const zoneFrostDates = {
         "3a": "Sep 8 - 15",
         "3b": "Sep 16 - 23",
@@ -294,7 +296,6 @@ document.addEventListener('DOMContentLoaded', function() {
         "11b": "No Frost"
     };
 
-
     async function lookupFrostDate(lat, lon) {
         try {
             const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
@@ -313,7 +314,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
     async function lookupZip(zip) {
         try {
             const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
@@ -327,12 +327,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const place = locJson.places && locJson.places[0];
             if (!place) throw new Error('No city found');
 
-
             let frost = await lookupFrostDate(place.latitude, place.longitude);
             if (!frost && zoneFrostDates[zoneJson.zone]) {
                 frost = zoneFrostDates[zoneJson.zone];
             }
-
 
             return {
                 city: place['place name'],
@@ -341,14 +339,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 firstFrost: frost,
                 lat: place.latitude,
                 lon: place.longitude
-
             };
         } catch (err) {
             console.error(err);
             return null;
         }
     }
-
 
     const defaultLocation = {
         zip: "77316",
@@ -401,13 +397,26 @@ document.addEventListener('DOMContentLoaded', function() {
         locationDisplay.textContent = `${userLocation.city}, ${userLocation.state}`;
         zoneDisplay.textContent = `USDA Zone ${userLocation.zone}`;
         firstFrostDisplay.textContent = userLocation.firstFrost || 'N/A';
-
         zipInput.value = userLocation.zip || '';
+    }
+
+    function updateSpaceUI() {
+        let total = 0;
+        let count = 0;
+        Object.entries(bedLayouts).forEach(([type, beds]) => {
+            const [c, r] = type.split('x').map(n => parseInt(n));
+            const area = c * r;
+            count += beds.length;
+            total += area * beds.length;
+        });
+        totalSpaceDisplay.textContent = `${total} sq ft`;
+        bedCountDisplay.textContent = `Across ${count} Raised Bed${count === 1 ? '' : 's'}`;
     }
 
     loadData();
     currentBedType = Object.keys(bedLayouts)[0] || currentBedType;
     updateLocationUI();
+    updateSpaceUI();
 
     const viabilityClasses = {
         'Good': 'border-green-accent',
@@ -615,6 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             setupBedSelectors();
             if (currentBedType) renderBedLayouts(currentBedType);
+            updateSpaceUI();
             saveData();
         }
     }
@@ -1334,6 +1344,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         setupBedSelectors();
         renderBedLayouts(currentBedType);
+        updateSpaceUI();
         saveData();
         closeBedFormModal();
     });
