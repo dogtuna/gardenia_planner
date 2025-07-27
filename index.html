@@ -203,6 +203,7 @@
                 <button class="px-4 py-2 rounded-full bg-secondary filter-action-plan-btn" data-filter="Other">Other</button>
             </div>
             <div id="action-plan-container" class="space-y-4 max-w-4xl mx-auto"></div>
+            <div class="chart-container mt-8"><canvas id="milestoneChart"></canvas></div>
         </section>
     </main>
 
@@ -448,6 +449,14 @@
                 11: 'bg-blue-200',
                 12: 'bg-purple-200',
             };
+
+            const actionMilestones = [
+                { name: 'Soil Prep & Seed Start', start: 7.8, end: 8.5 },
+                { name: 'Late Aug - Mid Sep Sowing', start: 8.7, end: 9.5 },
+                { name: 'Mid Sep - Early Oct Sowing', start: 9.5, end: 10.2 },
+                { name: 'Ongoing Care & Harvest', start: 10.0, end: 11.5 },
+                { name: 'Final Harvest & Frost', start: 11.0, end: 12.0 }
+            ];
 
             function renderPlantLibrary(filterFn = () => true) {
                 plantLibraryContainer.innerHTML = '';
@@ -833,6 +842,42 @@
                 });
             }
 
+            function renderMilestoneChart() {
+                const ctx = document.getElementById('milestoneChart').getContext('2d');
+                const labels = ['Jul','Aug','Sep','Oct','Nov','Dec'];
+                const datasets = actionMilestones.map(m => ({
+                    label: m.name,
+                    data: [{x: [m.start, m.end], y: m.name}],
+                    backgroundColor: '#A3B18A',
+                    borderColor: 'white',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                }));
+                if (window.milestoneChartInstance) {
+                    window.milestoneChartInstance.destroy();
+                }
+                window.milestoneChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: actionMilestones.map(m => m.name), datasets: datasets },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                min: 6.5,
+                                max: 12.5,
+                                grid: { display: true, drawBorder: false },
+                                ticks: { callback: function(value){ return labels[value-7]; } }
+                            },
+                            y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
             function setupNavbar() {
                 const sections = document.querySelectorAll('section');
                 const navLinks = document.querySelectorAll('.nav-link');
@@ -1019,6 +1064,7 @@
             renderSwapSuggestions();
             renderActionPlan(currentActionPlanFilter); // Initial render of action plan
             renderTimelineChart();
+            renderMilestoneChart();
             setupNavbar();
         });
     </script>
