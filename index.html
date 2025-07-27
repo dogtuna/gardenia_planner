@@ -472,15 +472,30 @@
             ];
 
 
-            const actionMilestonesByType = {
-                'All': actionMilestones,
-                'Greens': actionMilestones,
-                'Fruiting': actionMilestones,
-                'Roots': actionMilestones,
-                'Herbs': actionMilestones,
-                'Flowers': actionMilestones,
-                'Other': actionMilestones
-            };
+            function getMilestonesForType(filterType) {
+                if (filterType === 'All') {
+                    return actionMilestones;
+                }
+                const typeMap = {
+                    'Greens': ['Greens'],
+                    'Fruiting': ['Tomato','Pepper','Cucumber','Squash','Watermelon','Bean','Pea'],
+                    'Roots': ['Root'],
+                    'Herbs': ['Herb'],
+                    'Flowers': ['Flower'],
+                    'Other': ['Other']
+                };
+                const validTypes = typeMap[filterType] || [];
+                const plants = plantData.filter(p => validTypes.includes(p.type));
+                if (plants.length === 0) return actionMilestones;
+                const months = plants.map(p => p.plantingMonth);
+                const start = Math.min(...months);
+                const end = Math.max(...months);
+                return [
+                    { name: 'Seed Start', start: start - 0.2, end: start + 0.4 },
+                    { name: 'Planting Window', start: start + 0.4, end: end + 0.2 },
+                    { name: 'Harvest Window', start: end + 0.3, end: 12.0 }
+                ];
+            }
 
 
             function renderPlantLibrary(filterFn = () => true) {
@@ -871,7 +886,7 @@
             function renderMilestoneChart(filterType = 'All') {
                 const ctx = document.getElementById('milestoneChart').getContext('2d');
                 const labels = ['Jul','Aug','Sep','Oct','Nov','Dec'];
-                const milestones = actionMilestonesByType[filterType] || actionMilestones;
+                const milestones = getMilestonesForType(filterType);
                 const datasets = milestones.map(m => ({
 
                     label: m.name,
@@ -987,7 +1002,6 @@
                 });
             }
 
-
             function setupNavbar() {
                 const sections = document.querySelectorAll('section');
                 const navLinks = document.querySelectorAll('.nav-link');
@@ -1064,7 +1078,10 @@
 
                 document.querySelectorAll('.apply-swap-btn').forEach(button => {
                     button.addEventListener('click', (event) => {
-                        const btnData = event.target.dataset;
+                        const btnData = event.currentTarget.dataset;
+                        if (!confirm(`Swap ${btnData.originalPlant} with ${btnData.newPlantName}?`)) {
+                            return;
+                        }
                         const newPlantData = {
                             name: btnData.newPlantName,
                             emoji: btnData.newPlantEmoji,
