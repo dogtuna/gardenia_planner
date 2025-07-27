@@ -271,6 +271,30 @@ document.addEventListener('DOMContentLoaded', function() {
         "04101": {city: "Portland", state: "ME", zone: "5b"},
     };
 
+    async function lookupZip(zip) {
+        try {
+            const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
+            if (!zoneRes.ok) throw new Error('Zone lookup failed');
+            const zoneJson = await zoneRes.json();
+
+            const locRes = await fetch(`https://api.zippopotam.us/us/${zip}`);
+            if (!locRes.ok) throw new Error('City lookup failed');
+            const locJson = await locRes.json();
+
+            const place = locJson.places && locJson.places[0];
+            if (!place) throw new Error('No city found');
+
+            return {
+                city: place['place name'],
+                state: place['state abbreviation'],
+                zone: zoneJson.zone
+            };
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
+
     const defaultLocation = {zip: "77316", ...zipData["77316"]};
     let userLocation = {...defaultLocation};
 
@@ -1182,10 +1206,17 @@ document.addEventListener('DOMContentLoaded', function() {
         locationFormModal.style.display = 'flex';
     });
 
-    saveLocationBtn.addEventListener('click', () => {
+    saveLocationBtn.addEventListener('click', async () => {
         const zip = zipInput.value.trim();
-        if (zipData[zip]) {
-            userLocation = {zip, ...zipData[zip]};
+        let locationInfo = zipData[zip];
+        if (!locationInfo) {
+            locationInfo = await lookupZip(zip);
+            if (locationInfo) {
+                zipData[zip] = locationInfo; // cache for session
+            }
+        }
+        if (locationInfo) {
+            userLocation = { zip, ...locationInfo };
             updateLocationUI();
             locationFormModal.style.display = 'none';
             saveData();
