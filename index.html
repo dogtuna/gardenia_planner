@@ -203,6 +203,15 @@
                 <button class="px-4 py-2 rounded-full bg-secondary filter-action-plan-btn" data-filter="Other">Other</button>
             </div>
             <div id="action-plan-container" class="space-y-4 max-w-4xl mx-auto"></div>
+            <div class="chart-container mt-8"><canvas id="milestoneChart"></canvas></div>
+            <div class="flex justify-center mt-4" id="bed-timeline-controls"></div>
+            <div class="chart-container mt-4"><canvas id="bedTimelineChart"></canvas></div>
+        </section>
+
+        <section id="seed-orders" class="mb-12 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Seeds to Order</h2>
+            <p class="text-center text-gray-600 mb-6">This list tracks seeds needed for swapped plants not in your stash.</p>
+            <ul id="seeds-to-order-list" class="list-disc list-inside max-w-2xl mx-auto space-y-1"></ul>
         </section>
     </main>
 
@@ -429,8 +438,11 @@
             const resetFilterBtn = document.getElementById('reset-filter-btn');
             const swapSuggestionsContainer = document.getElementById('swap-suggestions-container');
             const actionPlanFilters = document.getElementById('action-plan-filters');
+            const seedsToOrderList = document.getElementById('seeds-to-order-list');
+            const bedTimelineControls = document.getElementById('bed-timeline-controls');
 
             let currentActionPlanFilter = 'All'; // Default filter for action plan
+            let seedsToOrder = [];
 
             const viabilityClasses = {
                 'Good': 'border-green-accent',
@@ -448,6 +460,39 @@
                 11: 'bg-blue-200',
                 12: 'bg-purple-200',
             };
+
+            const actionMilestones = [
+                { name: 'Soil Prep & Seed Start', start: 7.8, end: 8.5 },
+                { name: 'Late Aug - Mid Sep Sowing', start: 8.7, end: 9.5 },
+                { name: 'Mid Sep - Early Oct Sowing', start: 9.5, end: 10.2 },
+                { name: 'Ongoing Care & Harvest', start: 10.0, end: 11.5 },
+                { name: 'Final Harvest & Frost', start: 11.0, end: 12.0 }
+            ];
+
+            function getMilestonesForType(filterType) {
+                if (filterType === 'All') {
+                    return actionMilestones;
+                }
+                const typeMap = {
+                    'Greens': ['Greens'],
+                    'Fruiting': ['Tomato','Pepper','Cucumber','Squash','Watermelon','Bean','Pea'],
+                    'Roots': ['Root'],
+                    'Herbs': ['Herb'],
+                    'Flowers': ['Flower'],
+                    'Other': ['Other']
+                };
+                const validTypes = typeMap[filterType] || [];
+                const plants = plantData.filter(p => validTypes.includes(p.type));
+                if (plants.length === 0) return actionMilestones;
+                const months = plants.map(p => p.plantingMonth);
+                const start = Math.min(...months);
+                const end = Math.max(...months);
+                return [
+                    { name: 'Seed Start', start: start - 0.2, end: start + 0.4 },
+                    { name: 'Planting Window', start: start + 0.4, end: end + 0.2 },
+                    { name: 'Harvest Window', start: end + 0.3, end: 12.0 }
+                ];
+            }
 
             function renderPlantLibrary(filterFn = () => true) {
                 plantLibraryContainer.innerHTML = '';
@@ -833,6 +878,121 @@
                 });
             }
 
+            function renderMilestoneChart(filterType = 'All') {
+                const ctx = document.getElementById('milestoneChart').getContext('2d');
+                const labels = ['Jul','Aug','Sep','Oct','Nov','Dec'];
+                const milestones = getMilestonesForType(filterType);
+                const datasets = milestones.map(m => ({
+                    label: m.name,
+                    data: [{x: [m.start, m.end], y: m.name}],
+                    backgroundColor: '#A3B18A',
+                    borderColor: 'white',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                }));
+                if (window.milestoneChartInstance) {
+                    window.milestoneChartInstance.destroy();
+                }
+                window.milestoneChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: milestones.map(m => m.name), datasets: datasets },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                min: 6.5,
+                                max: 12.5,
+                                grid: { display: true, drawBorder: false },
+                                ticks: { callback: function(value){ return labels[value-7]; } }
+                            },
+                            y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            function setupBedTimelineControls() {
+                const select = document.createElement('select');
+                select.className = 'px-3 py-1 rounded-md border';
+                const options = [];
+                Object.entries(bedLayouts).forEach(([type, beds]) => {
+                    beds.forEach(b => options.push({ type, name: b.name }));
+                });
+                options.forEach(opt => {
+                    const o = document.createElement('option');
+                    o.value = opt.type + '|' + opt.name;
+                    o.textContent = opt.name + ' (' + opt.type + ')';
+                    select.appendChild(o);
+                });
+                bedTimelineControls.appendChild(select);
+                select.addEventListener('change', () => {
+                    const [t, n] = select.value.split('|');
+                    renderBedTimelineChart(t, n);
+                });
+                if (options.length > 0) {
+                    select.value = options[0].type + '|' + options[0].name;
+                    renderBedTimelineChart(options[0].type, options[0].name);
+                }
+            }
+
+            function renderBedTimelineChart(bedType, bedName) {
+                const bed = bedLayouts[bedType].find(b => b.name === bedName);
+                if (!bed) return;
+                const ctx = document.getElementById('bedTimelineChart').getContext('2d');
+                const labels = ['Jul','Aug','Sep','Oct','Nov','Dec'];
+                const datasets = bed.squares.map(sq => {
+                    const plant = plantData.find(p => p.name === sq.plant);
+                    if (!plant) return null;
+                    const maturityDays = parseInt(plant.maturity) || 30;
+                    const duration = maturityDays / 30;
+                    return {
+                        label: plant.name,
+                        data: [{x: [plant.plantingMonth - 0.5, plant.plantingMonth - 0.5 + duration], y: plant.name}],
+                        backgroundColor: '#D4A373',
+                        borderColor: 'white',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    };
+                }).filter(Boolean);
+
+                if (window.bedTimelineChartInstance) {
+                    window.bedTimelineChartInstance.destroy();
+                }
+                window.bedTimelineChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: datasets.map(d => d.label), datasets },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                min: 6.5,
+                                max: 12.5,
+                                grid: { display: true, drawBorder: false },
+                                ticks: { callback: function(value){ return labels[value-7]; } }
+                            },
+                            y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            function updateSeedsToOrderUI() {
+                seedsToOrderList.innerHTML = '';
+                seedsToOrder.forEach(seed => {
+                    const li = document.createElement('li');
+                    li.textContent = seed;
+                    seedsToOrderList.appendChild(li);
+                });
+            }
+
             function setupNavbar() {
                 const sections = document.querySelectorAll('section');
                 const navLinks = document.querySelectorAll('.nav-link');
@@ -909,7 +1069,10 @@
 
                 document.querySelectorAll('.apply-swap-btn').forEach(button => {
                     button.addEventListener('click', (event) => {
-                        const btnData = event.target.dataset;
+                        const btnData = event.currentTarget.dataset;
+                        if (!confirm(`Swap ${btnData.originalPlant} with ${btnData.newPlantName}?`)) {
+                            return;
+                        }
                         const newPlantData = {
                             name: btnData.newPlantName,
                             emoji: btnData.newPlantEmoji,
@@ -964,11 +1127,16 @@
                 const existingPlant = plantData.find(p => p.name === newPlantData.name);
                 if (!existingPlant && !isExtraOfExisting) {
                     plantData.push(newPlantData);
+                    if (!seedsToOrder.includes(newPlantData.name)) {
+                        seedsToOrder.push(newPlantData.name);
+                    }
                 } else if (existingPlant && isExtraOfExisting) {
-                    // If it's an "Extra" but the base plant doesn't exist, remove the "(Extra)" and add it.
                     const basePlantName = newPlantData.name.replace(' (Extra)', '');
                     if (!plantData.find(p => p.name === basePlantName)) {
                         plantData.push({ ...newPlantData, name: basePlantName, viability: newPlantData.viability.replace(' (Extra)', '') });
+                        if (!seedsToOrder.includes(basePlantName)) {
+                            seedsToOrder.push(basePlantName);
+                        }
                     }
                 }
 
@@ -979,17 +1147,13 @@
                 renderActionPlan(currentActionPlanFilter); // Re-render action plan with current filter
                 
                 // Remove the applied swap suggestion from the list
-                const swapIndex = swapSuggestions.findIndex(s => 
-                    s.originalPlantName === originalPlantName &&
-                    s.bedType === bedType &&
-                    s.bedName === bedName &&
-                    s.squareRow === squareRow &&
-                    s.squareCol === squareCol
-                );
-                if (swapIndex !== -1) {
-                    swapSuggestions.splice(swapIndex, 1);
-                    renderSwapSuggestions(); // Re-render the swap section
+                for (let i = swapSuggestions.length - 1; i >= 0; i--) {
+                    if (swapSuggestions[i].originalPlantName === originalPlantName) {
+                        swapSuggestions.splice(i, 1);
+                    }
                 }
+                renderSwapSuggestions();
+                updateSeedsToOrderUI();
 
                 alert(`Successfully swapped ${originalPlantName} with ${newPlantData.name} in ${bedName} (${bedType}) at square ${squareRow}${squareCol}!`);
             }
@@ -1005,6 +1169,7 @@
                     event.target.classList.remove('bg-secondary');
                     event.target.classList.add('bg-green-accent', 'text-white');
                     renderActionPlan(currentActionPlanFilter);
+                    renderMilestoneChart(currentActionPlanFilter);
                 });
             });
 
@@ -1019,6 +1184,9 @@
             renderSwapSuggestions();
             renderActionPlan(currentActionPlanFilter); // Initial render of action plan
             renderTimelineChart();
+            renderMilestoneChart(currentActionPlanFilter);
+            setupBedTimelineControls();
+            updateSeedsToOrderUI();
             setupNavbar();
         });
     </script>
