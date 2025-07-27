@@ -204,6 +204,7 @@
             </div>
             <div id="action-plan-container" class="space-y-4 max-w-4xl mx-auto"></div>
             <div class="chart-container mt-8"><canvas id="milestoneChart"></canvas></div>
+
             <div class="flex justify-center mt-4" id="bed-timeline-controls"></div>
             <div class="chart-container mt-4"><canvas id="bedTimelineChart"></canvas></div>
         </section>
@@ -212,6 +213,7 @@
             <h2 class="text-3xl font-bold mb-2 text-center">Seeds to Order</h2>
             <p class="text-center text-gray-600 mb-6">This list tracks seeds needed for swapped plants not in your stash.</p>
             <ul id="seeds-to-order-list" class="list-disc list-inside max-w-2xl mx-auto space-y-1"></ul>
+
         </section>
     </main>
 
@@ -469,6 +471,7 @@
                 { name: 'Final Harvest & Frost', start: 11.0, end: 12.0 }
             ];
 
+
             const actionMilestonesByType = {
                 'All': actionMilestones,
                 'Greens': actionMilestones,
@@ -478,6 +481,7 @@
                 'Flowers': actionMilestones,
                 'Other': actionMilestones
             };
+
 
             function renderPlantLibrary(filterFn = () => true) {
                 plantLibraryContainer.innerHTML = '';
@@ -863,11 +867,13 @@
                 });
             }
 
+
             function renderMilestoneChart(filterType = 'All') {
                 const ctx = document.getElementById('milestoneChart').getContext('2d');
                 const labels = ['Jul','Aug','Sep','Oct','Nov','Dec'];
                 const milestones = actionMilestonesByType[filterType] || actionMilestones;
                 const datasets = milestones.map(m => ({
+
                     label: m.name,
                     data: [{x: [m.start, m.end], y: m.name}],
                     backgroundColor: '#A3B18A',
@@ -881,7 +887,9 @@
                 }
                 window.milestoneChartInstance = new Chart(ctx, {
                     type: 'bar',
+
                     data: { labels: milestones.map(m => m.name), datasets: datasets },
+
                     options: {
                         indexAxis: 'y',
                         responsive: true,
@@ -899,6 +907,7 @@
                     }
                 });
             }
+
 
             function setupBedTimelineControls() {
                 const select = document.createElement('select');
@@ -977,6 +986,7 @@
                     seedsToOrderList.appendChild(li);
                 });
             }
+
 
             function setupNavbar() {
                 const sections = document.querySelectorAll('section');
@@ -1166,9 +1176,11 @@
             renderSwapSuggestions();
             renderActionPlan(currentActionPlanFilter); // Initial render of action plan
             renderTimelineChart();
+
             renderMilestoneChart(currentActionPlanFilter);
             setupBedTimelineControls();
             updateSeedsToOrderUI();
+
             setupNavbar();
         });
     </script>
