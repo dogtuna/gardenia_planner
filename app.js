@@ -272,6 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         "04101": {city: "Portland", state: "ME", zone: "5b"},
     };
 
+
     async function lookupFrostDate(lat, lon) {
         try {
             const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
@@ -290,6 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
     async function lookupZip(zip) {
         try {
             const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
@@ -303,6 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const place = locJson.places && locJson.places[0];
             if (!place) throw new Error('No city found');
 
+
             const frost = await lookupFrostDate(place.latitude, place.longitude);
 
             return {
@@ -312,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 firstFrost: frost,
                 lat: place.latitude,
                 lon: place.longitude
+
             };
         } catch (err) {
             console.error(err);
@@ -319,7 +323,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
     const defaultLocation = {zip: "77316", city: "Montgomery", state: "TX", zone: "9a", firstFrost: "Dec 1 - 10"};
+
     let userLocation = {...defaultLocation};
 
     function loadData() {
@@ -359,7 +365,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateLocationUI() {
         locationDisplay.textContent = `${userLocation.city}, ${userLocation.state}`;
         zoneDisplay.textContent = `USDA Zone ${userLocation.zone}`;
+
         firstFrostDisplay.textContent = userLocation.firstFrost || 'N/A';
+
         zipInput.value = userLocation.zip || '';
     }
 
@@ -554,9 +562,11 @@ document.addEventListener('DOMContentLoaded', function() {
         bedFormModal.style.display = 'none';
     }
 
+
     window.openLocationFormModal = function() {
         locationFormModal.style.display = 'flex';
     }
+
 
     window.closeLocationFormModal = function() {
         locationFormModal.style.display = 'none';
@@ -1239,6 +1249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const zip = zipInput.value.trim();
         let locationInfo = zipData[zip];
 
+
         // Always attempt a lookup if we have no cached frost date
         if (!locationInfo || !locationInfo.firstFrost) {
             const fetched = await lookupZip(zip);
@@ -1252,6 +1263,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fallback to cached info without frost date
             locationInfo = { ...zipData[zip] };
         }
+
 
         if (locationInfo) {
             userLocation = { zip, ...locationInfo };
