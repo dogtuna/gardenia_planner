@@ -1,6 +1,6 @@
 # Interactive Fall Garden Plan
 
-This repository contains a single-page web application for planning a fall vegetable garden. The interface includes an interactive planting timeline, garden bed layouts, a plant library, and a step-by-step action plan.
+This repository contains a single-page web application for planning a fall vegetable garden. The interface includes an interactive planting timeline, garden bed layouts, a plant library, and a step-by-step action plan. A button in the "Seeds to Order" section lets you download a text file with any seeds you still need to buy.
 
 ## Opening `index.html`
 
