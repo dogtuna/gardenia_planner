@@ -272,6 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         "04101": {city: "Portland", state: "ME", zone: "5b"},
     };
 
+
     const zoneFrostDates = {
         "3a": "Sep 8 - 15",
         "3b": "Sep 16 - 23",
@@ -293,6 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
         "11b": "No Frost"
     };
 
+
     async function lookupFrostDate(lat, lon) {
         try {
             const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
@@ -311,6 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
     async function lookupZip(zip) {
         try {
             const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
@@ -324,10 +327,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const place = locJson.places && locJson.places[0];
             if (!place) throw new Error('No city found');
 
+
             let frost = await lookupFrostDate(place.latitude, place.longitude);
             if (!frost && zoneFrostDates[zoneJson.zone]) {
                 frost = zoneFrostDates[zoneJson.zone];
             }
+
 
             return {
                 city: place['place name'],
@@ -336,12 +341,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 firstFrost: frost,
                 lat: place.latitude,
                 lon: place.longitude
+
             };
         } catch (err) {
             console.error(err);
             return null;
         }
     }
+
 
     const defaultLocation = {
         zip: "77316",
@@ -350,6 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
         zone: "9a",
         firstFrost: zoneFrostDates["9a"]
     };
+
     let userLocation = {...defaultLocation};
 
     function loadData() {
@@ -393,6 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
         locationDisplay.textContent = `${userLocation.city}, ${userLocation.state}`;
         zoneDisplay.textContent = `USDA Zone ${userLocation.zone}`;
         firstFrostDisplay.textContent = userLocation.firstFrost || 'N/A';
+
         zipInput.value = userLocation.zip || '';
     }
 
