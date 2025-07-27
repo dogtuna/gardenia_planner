@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ]
     };
 
-    const swapSuggestions = [
+    let swapSuggestions = [
         // 4x2 Bed 4 (Tomato/Pepper Gamble)
         {
             originalPlantName: 'Jelly Bean Tomatoes',
@@ -1066,11 +1066,13 @@ document.addEventListener('DOMContentLoaded', function() {
         renderActionPlan(currentActionPlanFilter); // Re-render action plan with current filter
         
         // Remove the applied swap suggestion from the list
-        for (let i = swapSuggestions.length - 1; i >= 0; i--) {
-            if (swapSuggestions[i].originalPlantName === originalPlantName) {
-                swapSuggestions.splice(i, 1);
-            }
-        }
+        swapSuggestions = swapSuggestions.filter(s =>
+            !(s.originalPlantName === originalPlantName &&
+              s.bedType === bedType &&
+              s.bedName === bedName &&
+              s.squareRow === squareRow &&
+              parseInt(s.squareCol) === squareCol)
+        );
         renderSwapSuggestions();
         updateSeedsToOrderUI();
 
