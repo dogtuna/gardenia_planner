@@ -215,6 +215,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const actionPlanFilters = document.getElementById('action-plan-filters');
     const seedsToOrderList = document.getElementById('seeds-to-order-list');
     const bedTimelineControls = document.getElementById('bed-timeline-controls');
+    const addPlantBtn = document.getElementById('add-plant-btn');
+    const plantFormModal = document.getElementById('plantFormModal');
+    const plantForm = document.getElementById('plant-form');
+    const plantNameInput = document.getElementById('plant-name');
+    const plantEmojiInput = document.getElementById('plant-emoji');
+    const plantViabilityInput = document.getElementById('plant-viability');
+    const plantMethodInput = document.getElementById('plant-method');
+    const plantWindowInput = document.getElementById('plant-window');
+    const plantSpacingInput = document.getElementById('plant-spacing');
+    const plantMaturityInput = document.getElementById('plant-maturity');
+    const plantNotesInput = document.getElementById('plant-notes');
+    const plantTypeInput = document.getElementById('plant-type');
+    const plantMonthInput = document.getElementById('plant-month');
+    let editPlantIndex = null;
 
     let currentActionPlanFilter = 'All'; // Default filter for action plan
     let seedsToOrder = [];
@@ -322,6 +336,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.openModal = function(plant) {
+        const idx = plantData.indexOf(plant);
         modalBody.innerHTML = `
             <div class="flex items-center gap-4">
                 <div class="text-5xl">${plant.emoji}</div>
@@ -374,12 +389,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 </ul>
             </div>
             ` : ''}
+            <div class="flex gap-2 mt-4">
+                <button class="flex-1 bg-blue-accent text-white px-4 py-2 rounded" onclick="openPlantForm(${idx})">Edit</button>
+                <button class="flex-1 bg-red-500 text-white px-4 py-2 rounded" onclick="deletePlant(${idx})">Delete</button>
+            </div>
         `;
         modal.style.display = 'flex';
     }
 
     window.closeModal = function() {
         modal.style.display = 'none';
+    }
+
+    window.openPlantForm = function(index = null) {
+        editPlantIndex = index;
+        if (index !== null) {
+            const plant = plantData[index];
+            plantNameInput.value = plant.name || '';
+            plantEmojiInput.value = plant.emoji || '';
+            plantViabilityInput.value = plant.viability || '';
+            plantMethodInput.value = plant.method || '';
+            plantWindowInput.value = plant.window || '';
+            plantSpacingInput.value = plant.spacing || '';
+            plantMaturityInput.value = plant.maturity || '';
+            plantNotesInput.value = plant.notes || '';
+            plantTypeInput.value = plant.type || '';
+            plantMonthInput.value = plant.plantingMonth || '';
+        } else {
+            plantForm.reset();
+        }
+        plantFormModal.style.display = 'flex';
+    }
+
+    window.closePlantFormModal = function() {
+        plantFormModal.style.display = 'none';
+    }
+
+    window.deletePlant = function(index) {
+        if (confirm('Delete this plant?')) {
+            plantData.splice(index, 1);
+            renderPlantLibrary();
+            saveData();
+            closeModal();
+        }
     }
 
     function renderBedLayouts(bedType) {
@@ -995,6 +1047,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     resetFilterBtn.addEventListener('click', () => {
         renderPlantLibrary();
+    });
+
+    addPlantBtn.addEventListener('click', () => {
+        openPlantForm();
+    });
+
+    plantForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newPlant = {
+            name: plantNameInput.value,
+            emoji: plantEmojiInput.value,
+            viability: plantViabilityInput.value,
+            method: plantMethodInput.value,
+            window: plantWindowInput.value,
+            spacing: plantSpacingInput.value,
+            maturity: plantMaturityInput.value,
+            notes: plantNotesInput.value,
+            type: plantTypeInput.value,
+            plantingMonth: parseInt(plantMonthInput.value) || 0
+        };
+        if (editPlantIndex !== null) {
+            plantData[editPlantIndex] = newPlant;
+        } else {
+            plantData.push(newPlant);
+        }
+        renderPlantLibrary();
+        saveData();
+        closePlantFormModal();
     });
 
     renderPlantLibrary();
