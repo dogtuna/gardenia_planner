@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { name: 'Sugar Baby Watermelon', viability: 'Gamble', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '70-80', notes: 'Needs strong trellis and vine management. Frost susceptible.', type: 'Other', emoji: '🍉', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-10 days', notes: 'Plant 1 inch deep. Keep moist.'}, {stage: 'Vining', days: '3-4 weeks', notes: 'Train onto trellis immediately. Prune side shoots.'}, {stage: 'First Fruit Set', days: '50-60 days', notes: 'Hand-pollinate if needed. Support developing fruit.'}, {stage: 'Harvest', days: '70-80 days', notes: 'Harvest when ground spot is yellow and tendril is dry.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves emerge'}, {type: 'Higher potassium fertilizer', frequency: 'Every 1-2 weeks', stage: 'Once flowering begins'}] },
     ];
 
-    const bedLayouts = {
+    let bedLayouts = {
         '4x2': [
             { name: 'Bed 1: Warm Season', grid: 'grid-cols-4', squares: [
                 { plant: 'Cocozelle Zucchini', count: 1, month: 7 }, { plant: 'Armenian Cucumber', count: 1, month: 7 }, { plant: 'Pickling Cucumber', count: 1, month: 7 }, { plant: 'Sugar Baby Watermelon', count: 1, month: 7 },
@@ -218,6 +218,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentActionPlanFilter = 'All'; // Default filter for action plan
     let seedsToOrder = [];
+
+    let actionPlanData = { filter: 'All' };
+
+    function loadData() {
+        const storedPlants = localStorage.getItem('plantLibrary');
+        if (storedPlants) {
+            plantData = JSON.parse(storedPlants);
+        }
+        const storedBeds = localStorage.getItem('bedLayouts');
+        if (storedBeds) {
+            bedLayouts = JSON.parse(storedBeds);
+        }
+        const storedPlan = localStorage.getItem('actionPlan');
+        if (storedPlan) {
+            actionPlanData = JSON.parse(storedPlan);
+            if (actionPlanData.filter) {
+                currentActionPlanFilter = actionPlanData.filter;
+            }
+        }
+        const storedSeeds = localStorage.getItem('seedList');
+        if (storedSeeds) {
+            seedsToOrder = JSON.parse(storedSeeds);
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem('plantLibrary', JSON.stringify(plantData));
+        localStorage.setItem('bedLayouts', JSON.stringify(bedLayouts));
+        localStorage.setItem('actionPlan', JSON.stringify(actionPlanData));
+        localStorage.setItem('seedList', JSON.stringify(seedsToOrder));
+    }
+
+    loadData();
 
     const viabilityClasses = {
         'Good': 'border-green-accent',
@@ -937,6 +970,8 @@ document.addEventListener('DOMContentLoaded', function() {
         renderSwapSuggestions();
         updateSeedsToOrderUI();
 
+        saveData();
+
         alert(`Successfully swapped ${originalPlantName} with ${newPlantData.name} in ${bedName} (${bedType}) at square ${squareRow}${squareCol}!`);
     }
 
@@ -952,6 +987,8 @@ document.addEventListener('DOMContentLoaded', function() {
             event.target.classList.add('bg-green-accent', 'text-white');
             renderActionPlan(currentActionPlanFilter);
             renderMilestoneChart(currentActionPlanFilter);
+            actionPlanData.filter = currentActionPlanFilter;
+            saveData();
         });
     });
 
@@ -972,4 +1009,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSeedsToOrderUI();
 
     setupNavbar();
+
+    saveData();
 });
