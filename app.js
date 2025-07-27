@@ -529,6 +529,12 @@ document.addEventListener('DOMContentLoaded', function() {
         bedFormModal.style.display = 'none';
     }
 
+
+    window.openLocationFormModal = function() {
+        locationFormModal.style.display = 'flex';
+    }
+
+
     window.closeLocationFormModal = function() {
         locationFormModal.style.display = 'none';
     }
