@@ -1,5 +1,6 @@
-import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, zoneTasks, plantingWindows } from "./constants.js";
-import { lookupFrostDate, lookupZip, fetchTasks, fetchOpenFarmWindow } from "./api.js";
+import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, plantingWindows } from "./constants.js";
+import { zoneTasks } from "./tasks.js";
+import { lookupFrostDate, lookupZip, fetchOpenFarmWindow } from "./api.js";
 document.addEventListener('DOMContentLoaded', async function() {
 
     let plantingWindowsCache = {};
@@ -365,12 +366,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         bedCountDisplay.textContent = `Across ${count} Raised Bed${count === 1 ? '' : 's'}`;
     }
 
-    async function updateTodoUI() {
+    function updateTodoUI() {
         const zone = userLocation.zone;
-        const weekTasks = await fetchTasks(zone, 7);
-        const monthTasks = await fetchTasks(zone, 30);
-        const week = weekTasks.length ? weekTasks.join('; ') : (zoneTasks[zone]?.week || zoneTasks.default.week).join('; ');
-        const month = monthTasks.length ? monthTasks.join('; ') : (zoneTasks[zone]?.month || zoneTasks.default.month).join('; ');
+        const week = (zoneTasks[zone]?.week || zoneTasks.default.week).join('; ');
+        const month = (zoneTasks[zone]?.month || zoneTasks.default.month).join('; ');
         const today = new Date();
         todoHeader.textContent = `What to Do Now (as of ${today.toLocaleDateString()})`;
         todoWeek.textContent = `In the next week: ${week}`;
