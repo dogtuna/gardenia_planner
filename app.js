@@ -406,37 +406,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const place = locJson.places && locJson.places[0];
             if (!place) throw new Error('No city found');
 
-            let frost = await lookupFrostDate(place.latitude, place.longitude);
-            if (!frost && zoneFrostDates[zoneJson.zone]) {
-                frost = zoneFrostDates[zoneJson.zone];
-            }
-
-            return {
-                city: place['place name'],
-                state: place['state abbreviation'],
-                zone: zoneJson.zone,
-                firstFrost: frost,
-                lat: place.latitude,
-                lon: place.longitude
-            };
-        } catch (err) {
-            console.error(err);
-            return null;
-        }
-    }
-
-    const defaultLocation = {
-        zip: "77316",
-        city: "Montgomery",
-        state: "TX",
-        zone: "9a",
-        firstFrost: zoneFrostDates["9a"]
-    };
-
-    const zoneFrostDates = {
-        "3a": "Sep 8 - 15",
-        "3b": "Sep 16 - 23",
-        "4a": "Sep 21 - 30",
+    if (!window.zoneFrostDates) {
+        window.zoneFrostDates = {
+            "3a": "Sep 8 - 15",
+            "3b": "Sep 16 - 23",
+            "4a": "Sep 21 - 30",
         "4b": "Sep 25 - Oct 5",
         "5a": "Oct 1 - 10",
         "5b": "Oct 10 - 20",
@@ -652,11 +626,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let firstFrost = await lookupFrostDate(place.latitude, place.longitude);
             let lastFrost = await lookupLastFrostDate(place.latitude, place.longitude);
-            if (!firstFrost && zoneFrostDates[zoneJson.zone]) {
-                firstFrost = zoneFrostDates[zoneJson.zone];
+            if (!firstFrost && window.zoneFrostDates[zoneJson.zone]) {
+                firstFrost = window.zoneFrostDates[zoneJson.zone];
             }
-            if (!lastFrost && zoneLastFrostDates[zoneJson.zone]) {
-                lastFrost = zoneLastFrostDates[zoneJson.zone];
+            if (!lastFrost && window.zoneLastFrostDates[zoneJson.zone]) {
+                lastFrost = window.zoneLastFrostDates[zoneJson.zone];
             }
 
             return {
@@ -679,8 +653,9 @@ document.addEventListener('DOMContentLoaded', function() {
         city: "Montgomery",
         state: "TX",
         zone: "9a",
-        firstFrost: zoneFrostDates["9a"],
-        lastFrost: zoneLastFrostDates["9a"]
+        firstFrost: window.zoneFrostDates["9a"],
+        lastFrost: window.zoneLastFrostDates["9a"]
+
     };
     let userLocation = {...defaultLocation};
 
@@ -707,11 +682,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const storedLocation = localStorage.getItem('userLocation');
         if (storedLocation) {
             userLocation = JSON.parse(storedLocation);
-            if (!userLocation.firstFrost && zoneFrostDates[userLocation.zone]) {
-                userLocation.firstFrost = zoneFrostDates[userLocation.zone];
+            if (!userLocation.firstFrost && window.zoneFrostDates[userLocation.zone]) {
+                userLocation.firstFrost = window.zoneFrostDates[userLocation.zone];
             }
-            if (!userLocation.lastFrost && zoneLastFrostDates[userLocation.zone]) {
-                userLocation.lastFrost = zoneLastFrostDates[userLocation.zone];
+            if (!userLocation.lastFrost && window.zoneLastFrostDates[userLocation.zone]) {
+                userLocation.lastFrost = window.zoneLastFrostDates[userLocation.zone];
             }
         }
     }
@@ -1638,11 +1613,12 @@ document.addEventListener('DOMContentLoaded', function() {
             locationInfo = { ...zipData[zip] };
         }
 
-        if (locationInfo && !locationInfo.firstFrost && zoneFrostDates[locationInfo.zone]) {
-            locationInfo.firstFrost = zoneFrostDates[locationInfo.zone];
+        if (locationInfo && !locationInfo.firstFrost && window.zoneFrostDates[locationInfo.zone]) {
+            locationInfo.firstFrost = window.zoneFrostDates[locationInfo.zone];
         }
-        if (locationInfo && !locationInfo.lastFrost && zoneLastFrostDates[locationInfo.zone]) {
-            locationInfo.lastFrost = zoneLastFrostDates[locationInfo.zone];
+        if (locationInfo && !locationInfo.lastFrost && window.zoneLastFrostDates[locationInfo.zone]) {
+            locationInfo.lastFrost = window.zoneLastFrostDates[locationInfo.zone];
+
         }
 
         if (locationInfo) {
