@@ -1,6 +1,6 @@
 import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, zoneTasks, plantingWindows } from "./constants.js";
-import { lookupFrostDate, lookupZip, fetchTasks } from "./api.js";
-document.addEventListener('DOMContentLoaded', function() {
+import { lookupFrostDate, lookupZip, fetchTasks, fetchOpenFarmWindow } from "./api.js";
+document.addEventListener('DOMContentLoaded', async function() {
     
     let plantData = [
         { name: 'Jelly Bean Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep warm (75-85°F).'}, {stage: 'True Leaves', days: '2-3 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '70-80 days after transplant', notes: 'Harvest ripe fruits regularly.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (e.g., 5-5-5)', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Tomato-specific fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
@@ -46,6 +46,23 @@ document.addEventListener('DOMContentLoaded', function() {
         ...p,
         window: plantingWindows[p.name] || p.window
     }));
+
+    async function fetchWindowsForPlants(plants) {
+        for (const plant of plants) {
+            if (!plant.window) {
+                let win = plantingWindows[plant.name];
+                if (!win) {
+                    win = await fetchOpenFarmWindow(plant.name);
+                    if (win) {
+                        plantingWindows[plant.name] = win;
+                    }
+                }
+                plant.window = win || plant.window;
+            }
+        }
+    }
+
+    await fetchWindowsForPlants(plantData);
 
     let bedLayouts = {
         '4x2': [
@@ -1151,7 +1168,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         document.querySelectorAll('.apply-swap-btn').forEach(button => {
-            button.addEventListener('click', (event) => {
+            button.addEventListener('click', async (event) => {
                 const btnData = event.currentTarget.dataset;
                 if (!confirm(`Swap ${btnData.originalPlant} with ${btnData.newPlantName}?`)) {
                     return;
@@ -1172,12 +1189,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     growthStages: JSON.parse(btnData.newPlantGrowthstages),
                     feedingSchedule: JSON.parse(btnData.newPlantFeedingschedule)
                 };
-                applySwap(btnData.originalPlant, btnData.bedType, btnData.bedName, btnData.squareRow, parseInt(btnData.squareCol), newPlantData);
+                await applySwap(btnData.originalPlant, btnData.bedType, btnData.bedName, btnData.squareRow, parseInt(btnData.squareCol), newPlantData);
             });
         });
     }
 
-    function applySwap(originalPlantName, bedType, bedName, squareRow, squareCol, newPlantData) {
+    async function applySwap(originalPlantName, bedType, bedName, squareRow, squareCol, newPlantData) {
         // Find the specific bed
         const bed = bedLayouts[bedType].find(b => b.name === bedName);
         if (!bed) {
@@ -1198,6 +1215,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (targetSquareIndex === -1 || targetSquareIndex >= bed.squares.length) {
             console.error('Calculated square index is out of bounds or invalid for bed:', bedName, squareRow, squareCol, targetSquareIndex);
             return;
+        }
+
+        if (!newPlantData.window) {
+            newPlantData.window = plantingWindows[newPlantData.name] || await fetchOpenFarmWindow(newPlantData.name);
+            if (newPlantData.window) {
+                plantingWindows[newPlantData.name] = newPlantData.window;
+            }
         }
 
         // Update the bed layout
@@ -1350,7 +1374,7 @@ document.addEventListener('DOMContentLoaded', function() {
         closeBedFormModal();
     });
 
-    plantForm.addEventListener('submit', (e) => {
+    plantForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const newPlant = {
             name: plantNameInput.value,
@@ -1364,6 +1388,12 @@ document.addEventListener('DOMContentLoaded', function() {
             type: plantTypeInput.value,
             plantingMonth: parseInt(plantMonthInput.value) || 0
         };
+        if (!newPlant.window) {
+            newPlant.window = plantingWindows[newPlant.name] || await fetchOpenFarmWindow(newPlant.name);
+            if (newPlant.window) {
+                plantingWindows[newPlant.name] = newPlant.window;
+            }
+        }
         if (editPlantIndex !== null) {
             plantData[editPlantIndex] = newPlant;
         } else {
