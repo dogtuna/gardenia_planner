@@ -8,13 +8,16 @@ export async function lookupFrostDate(lat, lon, season = 1) {
         const stationRes = await fetch(
             `${FARMSENSE_PROXY}/stations/?lat=${lat}&lon=${lon}`
         );
+
         if (!stationRes.ok) throw new Error('Station lookup failed');
         const stations = await stationRes.json();
         if (!Array.isArray(stations) || stations.length === 0) throw new Error('No station');
         const station = stations[0].id;
+
         const frostRes = await fetch(
             `${FARMSENSE_PROXY}/probabilities/?station=${station}&season=${season}`
         );
+
         if (!frostRes.ok) throw new Error('Frost lookup failed');
         const frostJson = await frostRes.json();
         const info = frostJson[0];
