@@ -1,6 +1,8 @@
 import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, zoneTasks, plantingWindows } from "./constants.js";
 import { lookupFrostDate, lookupZip, fetchTasks, fetchOpenFarmWindow } from "./api.js";
 document.addEventListener('DOMContentLoaded', async function() {
+
+    let plantingWindowsCache = {};
     
     let plantData = [
         { name: 'Jelly Bean Tomatoes', viability: 'Gamble', method: 'Start Indoors (Immediately) / Purchase Transplants', window: 'Jul-Aug', spacing: 1, maturity: '70 (from transplant)', notes: 'Very late start from seed. Transplants strongly recommended. Needs trellis. Frost susceptible.', type: 'Tomato', emoji: '🍅', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep warm (75-85°F).'}, {stage: 'True Leaves', days: '2-3 weeks', notes: 'Thin to strongest seedling. Begin hardening off.'}, {stage: 'Transplant Outdoors', days: '6-8 weeks', notes: 'Acclimate gradually to outdoor conditions.'}, {stage: 'First Harvest', days: '70-80 days after transplant', notes: 'Harvest ripe fruits regularly.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (e.g., 5-5-5)', frequency: 'Weekly', stage: 'After true leaves until transplant'}, {type: 'Tomato-specific fertilizer (e.g., 5-10-10)', frequency: 'Every 2-3 weeks', stage: 'After transplanting and fruit set'}] },
@@ -55,6 +57,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     win = await fetchOpenFarmWindow(plant.name);
                     if (win) {
                         plantingWindows[plant.name] = win;
+                        plantingWindowsCache[plant.name] = win;
+                        localStorage.setItem('plantingWindowsCache', JSON.stringify(plantingWindowsCache));
                     }
                 }
                 plant.window = win || plant.window;
@@ -321,6 +325,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 userLocation.lastFrost = window.zoneLastFrostDates[userLocation.zone];
             }
         }
+        const storedWindows = localStorage.getItem('plantingWindowsCache');
+        if (storedWindows) {
+            plantingWindowsCache = JSON.parse(storedWindows);
+            Object.assign(plantingWindows, plantingWindowsCache);
+        }
     }
 
     function saveData() {
@@ -329,6 +338,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         localStorage.setItem('actionPlan', JSON.stringify(actionPlanData));
         localStorage.setItem('seedList', JSON.stringify(seedsToOrder));
         localStorage.setItem('userLocation', JSON.stringify(userLocation));
+        localStorage.setItem('plantingWindowsCache', JSON.stringify(plantingWindowsCache));
     }
 
     function updateLocationUI() {
@@ -1220,6 +1230,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             newPlantData.window = plantingWindows[newPlantData.name] || await fetchOpenFarmWindow(newPlantData.name);
             if (newPlantData.window) {
                 plantingWindows[newPlantData.name] = newPlantData.window;
+                plantingWindowsCache[newPlantData.name] = newPlantData.window;
+                localStorage.setItem('plantingWindowsCache', JSON.stringify(plantingWindowsCache));
             }
         }
 
@@ -1391,6 +1403,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             newPlant.window = plantingWindows[newPlant.name] || await fetchOpenFarmWindow(newPlant.name);
             if (newPlant.window) {
                 plantingWindows[newPlant.name] = newPlant.window;
+                plantingWindowsCache[newPlant.name] = newPlant.window;
+                localStorage.setItem('plantingWindowsCache', JSON.stringify(plantingWindowsCache));
             }
         }
         if (editPlantIndex !== null) {
