@@ -795,6 +795,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function parseWindow(str) {
+            if (!str) return [null, null];
+
             const matches = str.toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/g);
             if (!matches) return [null, null];
             const start = monthMap[matches[0]];
