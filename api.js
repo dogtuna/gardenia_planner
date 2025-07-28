@@ -67,8 +67,14 @@ export async function fetchTasks(zone, days = 30) {
         const url = `https://perenual.com/api/gardening-task-planner?hardiness_zone=${zone}&start_date=${startStr}&end_date=${endStr}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Task lookup failed');
-        const json = await res.json();
-        return json.tasks || [];
+        const text = await res.text();
+        try {
+            const json = JSON.parse(text);
+            return json.tasks || [];
+        } catch (err) {
+            console.error('Invalid JSON from tasks API:', text.slice(0, 80));
+            return [];
+        }
     } catch (err) {
         console.error(err);
         return [];
