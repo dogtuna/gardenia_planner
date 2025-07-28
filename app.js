@@ -338,31 +338,6 @@ document.addEventListener('DOMContentLoaded', function() {
         todoMonth.textContent = `Over the next month: ${month}`;
     }
 
-    function updateSpaceUI() {
-        let total = 0;
-        let count = 0;
-        Object.entries(bedLayouts).forEach(([type, beds]) => {
-            const [c, r] = type.split('x').map(n => parseInt(n));
-            const area = c * r;
-            count += beds.length;
-            total += area * beds.length;
-        });
-        totalSpaceDisplay.textContent = `${total} sq ft`;
-        bedCountDisplay.textContent = `Across ${count} Raised Bed${count === 1 ? '' : 's'}`;
-    }
-
-    async function updateTodoUI() {
-        const zone = userLocation.zone;
-        const weekTasks = await fetchTasks(zone, 7);
-        const monthTasks = await fetchTasks(zone, 30);
-        const week = weekTasks.length ? weekTasks.join('; ') : (zoneTasks[zone]?.week || zoneTasks.default.week).join('; ');
-        const month = monthTasks.length ? monthTasks.join('; ') : (zoneTasks[zone]?.month || zoneTasks.default.month).join('; ');
-        const today = new Date();
-        todoHeader.textContent = `What to Do Now (as of ${today.toLocaleDateString()})`;
-        todoWeek.textContent = `In the next week: ${week}`;
-        todoMonth.textContent = `Over the next month: ${month}`;
-    }
-
     loadData();
     currentBedType = Object.keys(bedLayouts)[0] || currentBedType;
     updateLocationUI();
@@ -847,13 +822,15 @@ document.addEventListener('DOMContentLoaded', function() {
             let startIdx = (startM - 1 - currentMonth + 12) % 12;
             let endIdx = (endM - 1 - currentMonth + 12) % 12;
             if (endIdx < startIdx) endIdx += 12;
-            plantBars.push([startIdx, endIdx + 1]);
 
             const maturityDays = parseInt(plant.maturity) || 30;
             let harvestStart = startIdx + maturityDays / 30;
             let harvestEnd = harvestStart + 1;
             if (harvestEnd > firstFrostIndex) harvestEnd = firstFrostIndex;
-            harvestBars.push([harvestStart, harvestEnd]);
+            if (harvestEnd > 12) harvestEnd = 12;
+
+            plantBars.push({ x: startIdx, x2: endIdx + 1, y: name });
+            harvestBars.push({ x: harvestStart, x2: harvestEnd, y: name });
         });
 
         const datasets = [
@@ -889,6 +866,11 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             options: {
                 indexAxis: 'y',
+                parsing: {
+                    xAxisKey: 'x',
+                    x2AxisKey: 'x2',
+                    yAxisKey: 'y'
+                },
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
@@ -924,11 +906,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                const idx = context.dataIndex;
                                 const datasetLabel = context.dataset.label;
                                 const range = context.raw;
-                                const start = labels[Math.floor(range[0]) % 12];
-                                const end = labels[Math.floor(range[1]-1) % 12];
+                                const start = labels[Math.floor(range.x) % 12];
+                                const end = labels[Math.floor(range.x2 - 1) % 12];
                                 return `${datasetLabel}: ${start} - ${end}`;
                             }
                         }
