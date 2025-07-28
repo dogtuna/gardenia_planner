@@ -1,5 +1,6 @@
 import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, zoneTasks } from "./constants.js";
 import { lookupFrostDate, lookupZip, fetchTasks } from "./api.js";
+
 document.addEventListener('DOMContentLoaded', function() {
     
     let plantData = [
@@ -261,7 +262,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let actionPlanData = { filter: 'All' };
     let userLocation = { ...defaultLocation };
-
 
     function loadData() {
         const storedPlants = localStorage.getItem('plantLibrary');
@@ -1219,6 +1219,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Always attempt a lookup if we have no cached frost dates
         if (!locationInfo || !locationInfo.firstFrost || !locationInfo.lastFrost) {
             const fetched = await lookupZip(zip, zipData);
+
             if (fetched) {
                 locationInfo = fetched;
                 zipData[zip] = fetched; // cache for session
