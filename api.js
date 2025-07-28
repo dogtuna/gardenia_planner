@@ -74,4 +74,3 @@ export async function fetchTasks(zone, days = 30) {
         return [];
     }
 }
-

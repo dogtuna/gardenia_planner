@@ -1,6 +1,5 @@
 import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, zoneTasks } from "./constants.js";
 import { lookupFrostDate, lookupZip, fetchTasks } from "./api.js";
-
 document.addEventListener('DOMContentLoaded', function() {
     
     let plantData = [
@@ -309,6 +308,34 @@ document.addEventListener('DOMContentLoaded', function() {
         firstFrostDisplay.textContent = userLocation.firstFrost || 'N/A';
         lastFrostDisplay.textContent = userLocation.lastFrost || 'N/A';
         zipInput.value = userLocation.zip || '';
+        if (typeof renderTimelineChart === 'function') {
+            renderTimelineChart();
+        }
+    }
+
+    function updateSpaceUI() {
+        let total = 0;
+        let count = 0;
+        Object.entries(bedLayouts).forEach(([type, beds]) => {
+            const [c, r] = type.split('x').map(n => parseInt(n));
+            const area = c * r;
+            count += beds.length;
+            total += area * beds.length;
+        });
+        totalSpaceDisplay.textContent = `${total} sq ft`;
+        bedCountDisplay.textContent = `Across ${count} Raised Bed${count === 1 ? '' : 's'}`;
+    }
+
+    async function updateTodoUI() {
+        const zone = userLocation.zone;
+        const weekTasks = await fetchTasks(zone, 7);
+        const monthTasks = await fetchTasks(zone, 30);
+        const week = weekTasks.length ? weekTasks.join('; ') : (zoneTasks[zone]?.week || zoneTasks.default.week).join('; ');
+        const month = monthTasks.length ? monthTasks.join('; ') : (zoneTasks[zone]?.month || zoneTasks.default.month).join('; ');
+        const today = new Date();
+        todoHeader.textContent = `What to Do Now (as of ${today.toLocaleDateString()})`;
+        todoWeek.textContent = `In the next week: ${week}`;
+        todoMonth.textContent = `Over the next month: ${month}`;
     }
 
     function updateSpaceUI() {
@@ -341,6 +368,11 @@ document.addEventListener('DOMContentLoaded', function() {
     updateLocationUI();
     updateSpaceUI();
     updateTodoUI();
+
+    const monthMap = {
+        jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+        jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12
+    };
 
     const viabilityClasses = {
         'Good': 'border-green-accent',
@@ -779,29 +811,71 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderTimelineChart() {
         const ctx = document.getElementById('timelineChart').getContext('2d');
-        const labels = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const datasets = plantData
-            .filter(p => p.plantingMonth <= 12)
-            .map(p => {
-                const maturityDays = parseInt(p.maturity) || 30;
-                const startMonth = p.plantingMonth - 7;
-                const durationMonths = maturityDays / 30;
-                const data = new Array(6).fill(null);
-                data[startMonth] = 1;
-                return {
-                    label: p.name,
-                    data: [
-                        {x: [p.plantingMonth - 0.5, p.plantingMonth - 0.5 + durationMonths], y: p.name}
-                    ],
-                    backgroundColor: Object.values(monthColors)[p.plantingMonth-7] || 'bg-gray-200',
-                    borderColor: 'white',
-                    borderWidth: 2,
-                    borderRadius: 4,
-                    borderSkipped: false,
-                };
-            });
-        
-        const plantNames = [...new Set(plantData.filter(p => p.plantingMonth <= 12).map(p => p.name))].sort();
+        const currentMonth = new Date().getMonth();
+        const labels = [];
+        for (let i = 0; i < 12; i++) {
+            const m = (currentMonth + i) % 12;
+            labels.push(new Date(2000, m, 1).toLocaleString('default', { month: 'short' }));
+        }
+
+        function parseWindow(str) {
+            const matches = str.toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/g);
+            if (!matches) return [null, null];
+            const start = monthMap[matches[0]];
+            const end = monthMap[matches[matches.length - 1]] || start;
+            return [start, end];
+        }
+
+        function parseMonth(str) {
+            const m = (str || '').toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/);
+            return m ? monthMap[m[1]] : null;
+        }
+
+        const firstFrostMonth = parseMonth(userLocation.firstFrost) || 12;
+        const lastFrostMonth = parseMonth(userLocation.lastFrost) || 1;
+        const firstFrostIndex = (firstFrostMonth - 1 - currentMonth + 12) % 12;
+        const lastFrostIndex = (lastFrostMonth - 1 - currentMonth + 12) % 12;
+
+        const plantNames = [...new Set(plantData.map(p => p.name))];
+        const plantBars = [];
+        const harvestBars = [];
+        plantNames.forEach(name => {
+            const plant = plantData.find(p => p.name === name);
+            if (!plant) return;
+            const [startM, endM] = parseWindow(plant.window);
+            if (!startM) return;
+            let startIdx = (startM - 1 - currentMonth + 12) % 12;
+            let endIdx = (endM - 1 - currentMonth + 12) % 12;
+            if (endIdx < startIdx) endIdx += 12;
+            plantBars.push([startIdx, endIdx + 1]);
+
+            const maturityDays = parseInt(plant.maturity) || 30;
+            let harvestStart = startIdx + maturityDays / 30;
+            let harvestEnd = harvestStart + 1;
+            if (harvestEnd > firstFrostIndex) harvestEnd = firstFrostIndex;
+            harvestBars.push([harvestStart, harvestEnd]);
+        });
+
+        const datasets = [
+            {
+                label: 'Planting Window',
+                data: plantBars,
+                backgroundColor: '#A3B18A',
+                borderColor: 'white',
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false
+            },
+            {
+                label: 'Harvest Window',
+                data: harvestBars,
+                backgroundColor: '#D4A373',
+                borderColor: 'white',
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false
+            }
+        ];
 
         if (window.timelineChartInstance) {
             window.timelineChartInstance.destroy();
@@ -819,15 +893,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 maintainAspectRatio: false,
                 scales: {
                     x: {
-                        min: 6.5,
+                        min: -0.5,
                         max: 12.5,
                         grid: {
                             display: true,
                             drawBorder: false,
                         },
                         ticks: {
-                            callback: function(value, index, values) {
-                                return labels[value-7];
+                            callback: function(value) {
+                                const idx = Math.round(value);
+                                return labels[idx] || '';
                             }
                         }
                     },
@@ -844,13 +919,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: true
                     },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                const plant = plantData.find(p => p.name === context.dataset.label);
-                                return `${plant.name}: Plant in ${plant.window}`;
+                                const idx = context.dataIndex;
+                                const datasetLabel = context.dataset.label;
+                                const range = context.raw;
+                                const start = labels[Math.floor(range[0]) % 12];
+                                const end = labels[Math.floor(range[1]-1) % 12];
+                                return `${datasetLabel}: ${start} - ${end}`;
                             }
                         }
                     }
@@ -859,7 +938,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const activePoints = window.timelineChartInstance.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
                     if (activePoints.length > 0) {
                         const clickedIndex = activePoints[0].index;
-                        const month = Math.floor(window.timelineChartInstance.scales.x.getValueForPixel(e.x)) + 7;
+                        const month = (currentMonth + clickedIndex) % 12 + 1;
                         renderPlantLibrary(p => p.plantingMonth === month);
                         document.getElementById('plants').scrollIntoView({ behavior: 'smooth' });
                     }
