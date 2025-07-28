@@ -262,7 +262,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let actionPlanData = { filter: 'All' };
     let userLocation = { ...defaultLocation };
 
-
     function loadData() {
         const storedPlants = localStorage.getItem('plantLibrary');
         if (storedPlants) {
@@ -312,6 +311,31 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof renderTimelineChart === 'function') {
             renderTimelineChart();
         }
+    }
+
+    function updateSpaceUI() {
+        let total = 0;
+        let count = 0;
+        Object.entries(bedLayouts).forEach(([type, beds]) => {
+            const [c, r] = type.split('x').map(n => parseInt(n));
+            const area = c * r;
+            count += beds.length;
+            total += area * beds.length;
+        });
+        totalSpaceDisplay.textContent = `${total} sq ft`;
+        bedCountDisplay.textContent = `Across ${count} Raised Bed${count === 1 ? '' : 's'}`;
+    }
+
+    async function updateTodoUI() {
+        const zone = userLocation.zone;
+        const weekTasks = await fetchTasks(zone, 7);
+        const monthTasks = await fetchTasks(zone, 30);
+        const week = weekTasks.length ? weekTasks.join('; ') : (zoneTasks[zone]?.week || zoneTasks.default.week).join('; ');
+        const month = monthTasks.length ? monthTasks.join('; ') : (zoneTasks[zone]?.month || zoneTasks.default.month).join('; ');
+        const today = new Date();
+        todoHeader.textContent = `What to Do Now (as of ${today.toLocaleDateString()})`;
+        todoWeek.textContent = `In the next week: ${week}`;
+        todoMonth.textContent = `Over the next month: ${month}`;
     }
 
     function updateSpaceUI() {
@@ -1274,6 +1298,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Always attempt a lookup if we have no cached frost dates
         if (!locationInfo || !locationInfo.firstFrost || !locationInfo.lastFrost) {
             const fetched = await lookupZip(zip, zipData);
+
             if (fetched) {
                 locationInfo = fetched;
                 zipData[zip] = fetched; // cache for session
