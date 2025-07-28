@@ -1,3 +1,5 @@
+import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, zoneTasks } from "./constants.js";
+import { lookupFrostDate, lookupZip, fetchTasks } from "./api.js";
 document.addEventListener('DOMContentLoaded', function() {
     
     let plantData = [
@@ -238,8 +240,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const locationDisplay = document.getElementById('location-display');
     const zoneDisplay = document.getElementById('zone-display');
+    const firstFrostDisplay = document.getElementById('first-frost-display');
+    const lastFrostDisplay = document.getElementById('last-frost-display');
+    const todoHeader = document.getElementById('todo-header');
+    const todoWeek = document.getElementById('todo-week');
+    const todoMonth = document.getElementById('todo-month');
+    const totalSpaceDisplay = document.getElementById('total-space-display');
+    const bedCountDisplay = document.getElementById('bed-count-display');
     const editLocationBtn = document.getElementById('edit-location-btn');
-    const editLocationForm = document.getElementById('edit-location-form');
+    const locationFormModal = document.getElementById('locationFormModal');
     const zipInput = document.getElementById('zip-input');
     const saveLocationBtn = document.getElementById('save-location-btn');
     let editPlantIndex = null;
@@ -251,28 +260,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let seedsToOrder = [];
 
     let actionPlanData = { filter: 'All' };
+    let userLocation = { ...defaultLocation };
 
-    const zipData = {
-        "77316": {city: "Montgomery", state: "TX", zone: "9a"},
-        "10001": {city: "New York", state: "NY", zone: "7b"},
-        "90210": {city: "Beverly Hills", state: "CA", zone: "10b"},
-        "33109": {city: "Miami Beach", state: "FL", zone: "11a"},
-        "60601": {city: "Chicago", state: "IL", zone: "6a"},
-        "80202": {city: "Denver", state: "CO", zone: "5b"},
-        "98101": {city: "Seattle", state: "WA", zone: "8b"},
-        "85001": {city: "Phoenix", state: "AZ", zone: "9b"},
-        "55401": {city: "Minneapolis", state: "MN", zone: "4b"},
-        "97201": {city: "Portland", state: "OR", zone: "8b"},
-        "27601": {city: "Raleigh", state: "NC", zone: "7b"},
-        "75201": {city: "Dallas", state: "TX", zone: "8b"},
-        "02108": {city: "Boston", state: "MA", zone: "6b"},
-        "84101": {city: "Salt Lake City", state: "UT", zone: "7a"},
-        "96813": {city: "Honolulu", state: "HI", zone: "11b"},
-        "04101": {city: "Portland", state: "ME", zone: "5b"},
+    const monthMap = {
+        jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+        jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12
     };
 
-    const defaultLocation = {zip: "77316", ...zipData["77316"]};
-    let userLocation = {...defaultLocation};
 
     function loadData() {
         const storedPlants = localStorage.getItem('plantLibrary');
@@ -297,6 +291,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const storedLocation = localStorage.getItem('userLocation');
         if (storedLocation) {
             userLocation = JSON.parse(storedLocation);
+            if (!userLocation.firstFrost && window.zoneFrostDates[userLocation.zone]) {
+                userLocation.firstFrost = window.zoneFrostDates[userLocation.zone];
+            }
+            if (!userLocation.lastFrost && window.zoneLastFrostDates[userLocation.zone]) {
+                userLocation.lastFrost = window.zoneLastFrostDates[userLocation.zone];
+            }
         }
     }
 
@@ -311,12 +311,44 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateLocationUI() {
         locationDisplay.textContent = `${userLocation.city}, ${userLocation.state}`;
         zoneDisplay.textContent = `USDA Zone ${userLocation.zone}`;
+        firstFrostDisplay.textContent = userLocation.firstFrost || 'N/A';
+        lastFrostDisplay.textContent = userLocation.lastFrost || 'N/A';
         zipInput.value = userLocation.zip || '';
+        if (typeof renderTimelineChart === 'function') {
+            renderTimelineChart();
+        }
+    }
+
+    function updateSpaceUI() {
+        let total = 0;
+        let count = 0;
+        Object.entries(bedLayouts).forEach(([type, beds]) => {
+            const [c, r] = type.split('x').map(n => parseInt(n));
+            const area = c * r;
+            count += beds.length;
+            total += area * beds.length;
+        });
+        totalSpaceDisplay.textContent = `${total} sq ft`;
+        bedCountDisplay.textContent = `Across ${count} Raised Bed${count === 1 ? '' : 's'}`;
+    }
+
+    async function updateTodoUI() {
+        const zone = userLocation.zone;
+        const weekTasks = await fetchTasks(zone, 7);
+        const monthTasks = await fetchTasks(zone, 30);
+        const week = weekTasks.length ? weekTasks.join('; ') : (zoneTasks[zone]?.week || zoneTasks.default.week).join('; ');
+        const month = monthTasks.length ? monthTasks.join('; ') : (zoneTasks[zone]?.month || zoneTasks.default.month).join('; ');
+        const today = new Date();
+        todoHeader.textContent = `What to Do Now (as of ${today.toLocaleDateString()})`;
+        todoWeek.textContent = `In the next week: ${week}`;
+        todoMonth.textContent = `Over the next month: ${month}`;
     }
 
     loadData();
     currentBedType = Object.keys(bedLayouts)[0] || currentBedType;
     updateLocationUI();
+    updateSpaceUI();
+    updateTodoUI();
 
     const viabilityClasses = {
         'Good': 'border-green-accent',
@@ -505,6 +537,14 @@ document.addEventListener('DOMContentLoaded', function() {
         bedFormModal.style.display = 'none';
     }
 
+    window.openLocationFormModal = function() {
+        locationFormModal.style.display = 'flex';
+    }
+
+    window.closeLocationFormModal = function() {
+        locationFormModal.style.display = 'none';
+    }
+
     window.deleteBed = function(type, index) {
         if (confirm('Delete this bed?')) {
             bedLayouts[type].splice(index, 1);
@@ -516,6 +556,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             setupBedSelectors();
             if (currentBedType) renderBedLayouts(currentBedType);
+            updateSpaceUI();
             saveData();
         }
     }
@@ -580,6 +621,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             bedTypeSelector.appendChild(button);
         });
+        updateSpaceUI();
     }
 
     function generatePhaseContent(phase, filterType = 'All') {
@@ -745,29 +787,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderTimelineChart() {
         const ctx = document.getElementById('timelineChart').getContext('2d');
-        const labels = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const datasets = plantData
-            .filter(p => p.plantingMonth <= 12)
-            .map(p => {
-                const maturityDays = parseInt(p.maturity) || 30;
-                const startMonth = p.plantingMonth - 7;
-                const durationMonths = maturityDays / 30;
-                const data = new Array(6).fill(null);
-                data[startMonth] = 1;
-                return {
-                    label: p.name,
-                    data: [
-                        {x: [p.plantingMonth - 0.5, p.plantingMonth - 0.5 + durationMonths], y: p.name}
-                    ],
-                    backgroundColor: Object.values(monthColors)[p.plantingMonth-7] || 'bg-gray-200',
-                    borderColor: 'white',
-                    borderWidth: 2,
-                    borderRadius: 4,
-                    borderSkipped: false,
-                };
-            });
-        
-        const plantNames = [...new Set(plantData.filter(p => p.plantingMonth <= 12).map(p => p.name))].sort();
+        const currentMonth = new Date().getMonth();
+        const labels = [];
+        for (let i = 0; i < 12; i++) {
+            const m = (currentMonth + i) % 12;
+            labels.push(new Date(2000, m, 1).toLocaleString('default', { month: 'short' }));
+        }
+
+        function parseWindow(str) {
+            if (!str) return [null, null];
+            const matches = str.toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/g);
+            if (!matches) return [null, null];
+            const start = monthMap[matches[0]];
+            const end = monthMap[matches[matches.length - 1]] || start;
+            return [start, end];
+        }
+
+        function parseMonth(str) {
+            const m = (str || '').toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/);
+            return m ? monthMap[m[1]] : null;
+        }
+
+        const firstFrostMonth = parseMonth(userLocation.firstFrost) || 12;
+        const lastFrostMonth = parseMonth(userLocation.lastFrost) || 1;
+        const firstFrostIndex = (firstFrostMonth - 1 - currentMonth + 12) % 12;
+        const lastFrostIndex = (lastFrostMonth - 1 - currentMonth + 12) % 12;
+
+        const plantNames = [...new Set(plantData.map(p => p.name))];
+        const plantBars = [];
+        const harvestBars = [];
+        plantNames.forEach(name => {
+            const plant = plantData.find(p => p.name === name);
+            if (!plant) return;
+            const [startM, endM] = parseWindow(plant.window);
+            if (!startM) return;
+            let startIdx = (startM - 1 - currentMonth + 12) % 12;
+            let endIdx = (endM - 1 - currentMonth + 12) % 12;
+            if (endIdx < startIdx) endIdx += 12;
+
+            const maturityDays = parseInt(plant.maturity) || 30;
+            let harvestStart = startIdx + maturityDays / 30;
+            let harvestEnd = harvestStart + 1;
+            if (harvestEnd > firstFrostIndex) harvestEnd = firstFrostIndex;
+            if (harvestEnd > 12) harvestEnd = 12;
+
+            plantBars.push({ x: startIdx, x2: endIdx + 1, y: name });
+            harvestBars.push({ x: harvestStart, x2: harvestEnd, y: name });
+        });
+
+        const datasets = [
+            {
+                label: 'Planting Window',
+                data: plantBars,
+                backgroundColor: '#A3B18A',
+                borderColor: 'white',
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false
+            },
+            {
+                label: 'Harvest Window',
+                data: harvestBars,
+                backgroundColor: '#D4A373',
+                borderColor: 'white',
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false
+            }
+        ];
 
         if (window.timelineChartInstance) {
             window.timelineChartInstance.destroy();
@@ -781,19 +868,25 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             options: {
                 indexAxis: 'y',
+                parsing: {
+                    xAxisKey: 'x',
+                    x2AxisKey: 'x2',
+                    yAxisKey: 'y'
+                },
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
                     x: {
-                        min: 6.5,
+                        min: -0.5,
                         max: 12.5,
                         grid: {
                             display: true,
                             drawBorder: false,
                         },
                         ticks: {
-                            callback: function(value, index, values) {
-                                return labels[value-7];
+                            callback: function(value) {
+                                const idx = Math.round(value);
+                                return labels[idx] || '';
                             }
                         }
                     },
@@ -810,13 +903,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: true
                     },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                const plant = plantData.find(p => p.name === context.dataset.label);
-                                return `${plant.name}: Plant in ${plant.window}`;
+                                const datasetLabel = context.dataset.label;
+                                const range = context.raw;
+                                const start = labels[Math.floor(range.x) % 12];
+                                const end = labels[Math.floor(range.x2 - 1) % 12];
+                                return `${datasetLabel}: ${start} - ${end}`;
                             }
                         }
                     }
@@ -825,7 +921,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const activePoints = window.timelineChartInstance.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
                     if (activePoints.length > 0) {
                         const clickedIndex = activePoints[0].index;
-                        const month = Math.floor(window.timelineChartInstance.scales.x.getValueForPixel(e.x)) + 7;
+                        const month = (currentMonth + clickedIndex) % 12 + 1;
                         renderPlantLibrary(p => p.plantingMonth === month);
                         document.getElementById('plants').scrollIntoView({ behavior: 'smooth' });
                     }
@@ -1175,15 +1271,39 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     editLocationBtn.addEventListener('click', () => {
-        editLocationForm.classList.toggle('hidden');
+        locationFormModal.style.display = 'flex';
     });
 
-    saveLocationBtn.addEventListener('click', () => {
+    saveLocationBtn.addEventListener('click', async () => {
         const zip = zipInput.value.trim();
-        if (zipData[zip]) {
-            userLocation = {zip, ...zipData[zip]};
+        let locationInfo = zipData[zip];
+
+        // Always attempt a lookup if we have no cached frost dates
+        if (!locationInfo || !locationInfo.firstFrost || !locationInfo.lastFrost) {
+            const fetched = await lookupZip(zip, zipData);
+            if (fetched) {
+                locationInfo = fetched;
+                zipData[zip] = fetched; // cache for session
+            }
+        }
+
+        if (!locationInfo && zipData[zip]) {
+            // Fallback to cached info without frost date
+            locationInfo = { ...zipData[zip] };
+        }
+
+        if (locationInfo && !locationInfo.firstFrost && window.zoneFrostDates[locationInfo.zone]) {
+            locationInfo.firstFrost = window.zoneFrostDates[locationInfo.zone];
+        }
+        if (locationInfo && !locationInfo.lastFrost && window.zoneLastFrostDates[locationInfo.zone]) {
+            locationInfo.lastFrost = window.zoneLastFrostDates[locationInfo.zone];
+        }
+
+        if (locationInfo) {
+            userLocation = { zip, ...locationInfo };
             updateLocationUI();
-            editLocationForm.classList.add('hidden');
+            updateTodoUI();
+            locationFormModal.style.display = 'none';
             saveData();
         } else {
             alert('ZIP code not available.');
@@ -1215,6 +1335,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         setupBedSelectors();
         renderBedLayouts(currentBedType);
+        updateSpaceUI();
         saveData();
         closeBedFormModal();
     });
