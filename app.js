@@ -274,6 +274,137 @@ document.addEventListener('DOMContentLoaded', function() {
         "96813": {city: "Honolulu", state: "HI", zone: "11b"},
         "04101": {city: "Portland", state: "ME", zone: "5b"},
     };
+  
+    const zoneFrostDates = {
+        "3a": "Sep 8 - 15",
+        "3b": "Sep 16 - 23",
+        "4a": "Sep 21 - 30",
+        "4b": "Sep 25 - Oct 5",
+        "5a": "Oct 1 - 10",
+        "5b": "Oct 10 - 20",
+        "6a": "Oct 10 - 20",
+        "6b": "Oct 20 - 30",
+        "7a": "Oct 20 - 30",
+        "7b": "Oct 30 - Nov 10",
+        "8a": "Nov 1 - 10",
+        "8b": "Nov 10 - 20",
+        "9a": "Dec 1 - 10",
+        "9b": "Dec 10 - 20",
+        "10a": "Rare Frost",
+        "10b": "Rare Frost",
+        "11a": "No Frost",
+        "11b": "No Frost"
+    };
+
+    async function lookupFrostDate(lat, lon) {
+        try {
+            const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
+            if (!stationRes.ok) throw new Error('Station lookup failed');
+            const stations = await stationRes.json();
+            if (!Array.isArray(stations) || stations.length === 0) throw new Error('No station');
+            const station = stations[0].id;
+            const frostRes = await fetch(`https://api.farmsense.net/v1/frostdates/probabilities/?station=${station}&season=1`);
+            if (!frostRes.ok) throw new Error('Frost lookup failed');
+            const frostJson = await frostRes.json();
+            const info = frostJson[0];
+            return info && (info.prob_50 || info.prob_70 || info.prob_90 || info.date);
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
+
+    async function lookupZip(zip) {
+        try {
+            const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
+            if (!zoneRes.ok) throw new Error('Zone lookup failed');
+            const zoneJson = await zoneRes.json();
+
+            const locRes = await fetch(`https://api.zippopotam.us/us/${zip}`);
+            if (!locRes.ok) throw new Error('City lookup failed');
+            const locJson = await locRes.json();
+
+            const place = locJson.places && locJson.places[0];
+            if (!place) throw new Error('No city found');
+
+            let frost = await lookupFrostDate(place.latitude, place.longitude);
+            if (!frost && zoneFrostDates[zoneJson.zone]) {
+                frost = zoneFrostDates[zoneJson.zone];
+            }
+
+            return {
+                city: place['place name'],
+                state: place['state abbreviation'],
+                zone: zoneJson.zone,
+                firstFrost: frost,
+                lat: place.latitude,
+                lon: place.longitude
+            };
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
+
+    const defaultLocation = {
+        zip: "77316",
+        city: "Montgomery",
+        state: "TX",
+        zone: "9a",
+        firstFrost: zoneFrostDates["9a"]
+    };
+
+    const zoneFrostDates = {
+        "3a": "Sep 8 - 15",
+        "3b": "Sep 16 - 23",
+        "4a": "Sep 21 - 30",
+        "4b": "Sep 25 - Oct 5",
+        "5a": "Oct 1 - 10",
+        "5b": "Oct 10 - 20",
+        "6a": "Oct 10 - 20",
+        "6b": "Oct 20 - 30",
+        "7a": "Oct 20 - 30",
+        "7b": "Oct 30 - Nov 10",
+        "8a": "Nov 1 - 10",
+        "8b": "Nov 10 - 20",
+        "9a": "Dec 1 - 10",
+        "9b": "Dec 10 - 20",
+        "10a": "Rare Frost",
+        "10b": "Rare Frost",
+        "11a": "No Frost",
+        "11b": "No Frost"
+    };
+
+    async function lookupFrostDate(lat, lon) {
+        try {
+            const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
+            if (!stationRes.ok) throw new Error('Station lookup failed');
+            const stations = await stationRes.json();
+            if (!Array.isArray(stations) || stations.length === 0) throw new Error('No station');
+            const station = stations[0].id;
+            const frostRes = await fetch(`https://api.farmsense.net/v1/frostdates/probabilities/?station=${station}&season=1`);
+            if (!frostRes.ok) throw new Error('Frost lookup failed');
+            const frostJson = await frostRes.json();
+            const info = frostJson[0];
+            return info && (info.prob_50 || info.prob_70 || info.prob_90 || info.date);
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
+
+    async function lookupZip(zip) {
+        try {
+            const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
+            if (!zoneRes.ok) throw new Error('Zone lookup failed');
+            const zoneJson = await zoneRes.json();
+
+            const locRes = await fetch(`https://api.zippopotam.us/us/${zip}`);
+            if (!locRes.ok) throw new Error('City lookup failed');
+            const locJson = await locRes.json();
+
+            const place = locJson.places && locJson.places[0];
+            if (!place) throw new Error('No city found');
 
     if (!window.zoneFrostDates) {
         window.zoneFrostDates = {
@@ -295,14 +426,12 @@ document.addEventListener('DOMContentLoaded', function() {
         "10b": "Rare Frost",
         "11a": "No Frost",
         "11b": "No Frost"
-        };
-    }
+    };
 
-    if (!window.zoneLastFrostDates) {
-        window.zoneLastFrostDates = {
-            "3a": "May 21 - Jun 10",
-            "3b": "May 11 - May 30",
-            "4a": "May 1 - May 20",
+    const zoneLastFrostDates = {
+        "3a": "May 21 - Jun 10",
+        "3b": "May 11 - May 30",
+        "4a": "May 1 - May 20",
         "4b": "Apr 21 - May 10",
         "5a": "Apr 11 - Apr 30",
         "5b": "Apr 1 - Apr 20",
@@ -318,8 +447,133 @@ document.addEventListener('DOMContentLoaded', function() {
         "10b": "Rare Frost",
         "11a": "No Frost",
         "11b": "No Frost"
-        };
+    };
+
+    async function lookupFrostDate(lat, lon) {
+        try {
+            const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
+            if (!stationRes.ok) throw new Error('Station lookup failed');
+            const stations = await stationRes.json();
+            if (!Array.isArray(stations) || stations.length === 0) throw new Error('No station');
+            const station = stations[0].id;
+            const frostRes = await fetch(`https://api.farmsense.net/v1/frostdates/probabilities/?station=${station}&season=1`);
+            if (!frostRes.ok) throw new Error('Frost lookup failed');
+            const frostJson = await frostRes.json();
+            const info = frostJson[0];
+            return info && (info.prob_50 || info.prob_70 || info.prob_90 || info.date);
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
     }
+
+    async function lookupLastFrostDate(lat, lon) {
+        try {
+            const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
+            if (!stationRes.ok) throw new Error('Station lookup failed');
+            const stations = await stationRes.json();
+            if (!Array.isArray(stations) || stations.length === 0) throw new Error('No station');
+            const station = stations[0].id;
+            const frostRes = await fetch(`https://api.farmsense.net/v1/frostdates/probabilities/?station=${station}&season=2`);
+            if (!frostRes.ok) throw new Error('Frost lookup failed');
+            const frostJson = await frostRes.json();
+            const info = frostJson[0];
+            return info && (info.prob_50 || info.prob_70 || info.prob_90 || info.date);
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
+
+    async function lookupZip(zip) {
+        try {
+            const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
+            if (!zoneRes.ok) throw new Error('Zone lookup failed');
+            const zoneJson = await zoneRes.json();
+
+            const locRes = await fetch(`https://api.zippopotam.us/us/${zip}`);
+            if (!locRes.ok) throw new Error('City lookup failed');
+            const locJson = await locRes.json();
+
+            const place = locJson.places && locJson.places[0];
+            if (!place) throw new Error('No city found');
+
+            let firstFrost = await lookupFrostDate(place.latitude, place.longitude);
+            let lastFrost = await lookupLastFrostDate(place.latitude, place.longitude);
+            if (!firstFrost && zoneFrostDates[zoneJson.zone]) {
+                firstFrost = zoneFrostDates[zoneJson.zone];
+            }
+            if (!lastFrost && zoneLastFrostDates[zoneJson.zone]) {
+                lastFrost = zoneLastFrostDates[zoneJson.zone];
+            }
+
+            return {
+                city: place['place name'],
+                state: place['state abbreviation'],
+                zone: zoneJson.zone,
+                firstFrost,
+                lastFrost,
+                lat: place.latitude,
+                lon: place.longitude
+            };
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
+
+    const defaultLocation = {
+        zip: "77316",
+        city: "Montgomery",
+        state: "TX",
+        zone: "9a",
+        firstFrost: zoneFrostDates["9a"],
+        lastFrost: zoneLastFrostDates["9a"]
+    };
+
+    var zoneFrostDates = window.zoneFrostDates || {
+        "3a": "Sep 8 - 15",
+        "3b": "Sep 16 - 23",
+        "4a": "Sep 21 - 30",
+        "4b": "Sep 25 - Oct 5",
+        "5a": "Oct 1 - 10",
+        "5b": "Oct 10 - 20",
+        "6a": "Oct 10 - 20",
+        "6b": "Oct 20 - 30",
+        "7a": "Oct 20 - 30",
+        "7b": "Oct 30 - Nov 10",
+        "8a": "Nov 1 - 10",
+        "8b": "Nov 10 - 20",
+        "9a": "Dec 1 - 10",
+        "9b": "Dec 10 - 20",
+        "10a": "Rare Frost",
+        "10b": "Rare Frost",
+        "11a": "No Frost",
+        "11b": "No Frost"
+    };
+    window.zoneFrostDates = zoneFrostDates;
+
+    var zoneLastFrostDates = window.zoneLastFrostDates || {
+        "3a": "May 21 - Jun 10",
+        "3b": "May 11 - May 30",
+        "4a": "May 1 - May 20",
+        "4b": "Apr 21 - May 10",
+        "5a": "Apr 11 - Apr 30",
+        "5b": "Apr 1 - Apr 20",
+        "6a": "Mar 20 - Apr 10",
+        "6b": "Mar 10 - Mar 30",
+        "7a": "Mar 1 - Mar 20",
+        "7b": "Feb 20 - Mar 10",
+        "8a": "Feb 10 - Feb 25",
+        "8b": "Feb 1 - Feb 20",
+        "9a": "Jan 15 - Feb 1",
+        "9b": "Jan 1 - Jan 20",
+        "10a": "Rare Frost",
+        "10b": "Rare Frost",
+        "11a": "No Frost",
+        "11b": "No Frost"
+    };
+    window.zoneLastFrostDates = zoneLastFrostDates;
 
     async function lookupFrostDate(lat, lon) {
         try {
@@ -401,6 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
         zone: "9a",
         firstFrost: window.zoneFrostDates["9a"],
         lastFrost: window.zoneLastFrostDates["9a"]
+
     };
     let userLocation = {...defaultLocation};
 
@@ -1363,6 +1618,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (locationInfo && !locationInfo.lastFrost && window.zoneLastFrostDates[locationInfo.zone]) {
             locationInfo.lastFrost = window.zoneLastFrostDates[locationInfo.zone];
+
         }
 
         if (locationInfo) {
