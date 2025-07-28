@@ -1,0 +1,58 @@
+import { zoneFrostDates, zoneLastFrostDates } from './constants.js';
+
+export async function lookupFrostDate(lat, lon, season = 1) {
+    try {
+        const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
+        if (!stationRes.ok) throw new Error('Station lookup failed');
+        const stations = await stationRes.json();
+        if (!Array.isArray(stations) || stations.length === 0) throw new Error('No station');
+        const station = stations[0].id;
+        const frostRes = await fetch(`https://api.farmsense.net/v1/frostdates/probabilities/?station=${station}&season=${season}`);
+        if (!frostRes.ok) throw new Error('Frost lookup failed');
+        const frostJson = await frostRes.json();
+        const info = frostJson[0];
+        return info && (info.prob_50 || info.prob_70 || info.prob_90 || info.date);
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
+}
+
+export async function lookupZip(zip, zipCache = {}) {
+    try {
+        const zoneRes = await fetch(`https://phzmapi.org/${zip}.json`);
+        if (!zoneRes.ok) throw new Error('Zone lookup failed');
+        const zoneJson = await zoneRes.json();
+
+        const locRes = await fetch(`https://api.zippopotam.us/us/${zip}`);
+        if (!locRes.ok) throw new Error('City lookup failed');
+        const locJson = await locRes.json();
+
+        const place = locJson.places && locJson.places[0];
+        if (!place) throw new Error('No city found');
+
+        let firstFrost = await lookupFrostDate(place.latitude, place.longitude, 1);
+        let lastFrost = await lookupFrostDate(place.latitude, place.longitude, 2);
+        if (!firstFrost && zoneFrostDates[zoneJson.zone]) {
+            firstFrost = zoneFrostDates[zoneJson.zone];
+        }
+        if (!lastFrost && zoneLastFrostDates[zoneJson.zone]) {
+            lastFrost = zoneLastFrostDates[zoneJson.zone];
+        }
+
+        const data = {
+            city: place['place name'],
+            state: place['state abbreviation'],
+            zone: zoneJson.zone,
+            firstFrost,
+            lastFrost,
+            lat: place.latitude,
+            lon: place.longitude
+        };
+        zipCache[zip] = data;
+        return data;
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
+}
