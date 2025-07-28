@@ -262,7 +262,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let actionPlanData = { filter: 'All' };
     let userLocation = { ...defaultLocation };
 
-
     function loadData() {
         const storedPlants = localStorage.getItem('plantLibrary');
         if (storedPlants) {
@@ -1280,6 +1279,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Always attempt a lookup if we have no cached frost dates
         if (!locationInfo || !locationInfo.firstFrost || !locationInfo.lastFrost) {
             const fetched = await lookupZip(zip, zipData);
+
             if (fetched) {
                 locationInfo = fetched;
                 zipData[zip] = fetched; // cache for session
