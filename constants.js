@@ -95,3 +95,41 @@ export const defaultLocation = window.defaultLocation || {
     lastFrost: zoneLastFrostDates["9a"]
 };
 window.defaultLocation = defaultLocation;
+
+// Planting windows sourced from open data (e.g., OpenFarm) for use in the timeline
+export const plantingWindows = window.plantingWindows || {
+    'Jelly Bean Tomatoes': 'Jul-Aug',
+    'Big Boy Hybrid Tomatoes': 'Jul-Aug',
+    'Peppermint San Marzano Tomatoes': 'Jul-Aug',
+    'Large Cherry Tomatoes': 'Jul-Aug',
+    'Greek Oregano': 'Jul-Aug',
+    'Cosmos': 'Sep-Oct',
+    'Strawflower': 'Mid-Oct',
+    'Black Elderberry': 'Jul-Aug',
+    'Blue Milkweed': 'Dec',
+    'Butternut Squash': 'Jul-Aug',
+    'Pickling Cucumber': 'Jul-Aug',
+    'Marigolds': 'Jul-Aug',
+    'Ranunculus': 'Mid-Nov',
+    'Little Gem Lettuce': 'Late Aug-Sep',
+    'Armenian Cucumber': 'Jul-Aug',
+    'Cocozelle Zucchini': 'Jul-Aug',
+    'Long Purple Eggplant': 'Jul-Aug',
+    'Baby Leaf Spinach': 'Late Aug-Sep',
+    'Bloomsdale Spinach': 'Late Aug-Sep',
+    'Roma II Beans': 'Jul-Aug',
+    'Blue Lake 156 Beans': 'Jul-Aug',
+    'Broad Leaf Sage': 'Early Oct',
+    'Genovese Basil': 'Jul-Aug',
+    'Carnival Blend Carrots': 'Mid-Sep',
+    'Cilantro': 'Sep',
+    'Fernleaf Dill': 'Early Oct',
+    'Cayenne Pepper': 'Jul-Aug',
+    'Santa Fe Grande Pepper': 'Jul-Aug',
+    'Cal Wonder Bell Pepper': 'Jul-Aug',
+    'Jalapeno Pepper': 'Jul-Aug',
+    'Chives': 'Early Oct',
+    'Warrior Onion': 'Late Aug-Sep',
+    'Sugar Baby Watermelon': 'Jul-Aug'
+};
+window.plantingWindows = plantingWindows;
