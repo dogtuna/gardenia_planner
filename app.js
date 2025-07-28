@@ -857,8 +857,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (harvestEnd > firstFrostIndex) harvestEnd = firstFrostIndex;
             if (harvestEnd > 12) harvestEnd = 12;
 
-            plantBars.push({ x: startIdx, x2: endIdx + 1, y: name });
-            harvestBars.push({ x: harvestStart, x2: harvestEnd, y: name });
+            plantBars.push({ x: [startIdx, endIdx + 1], y: name });
+            harvestBars.push({ x: [harvestStart, harvestEnd], y: name });
         });
 
         const datasets = [
@@ -896,7 +896,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 indexAxis: 'y',
                 parsing: {
                     xAxisKey: 'x',
-                    x2AxisKey: 'x2',
                     yAxisKey: 'y'
                 },
                 responsive: true,
@@ -936,8 +935,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                             label: function(context) {
                                 const datasetLabel = context.dataset.label;
                                 const range = context.raw;
-                                const start = labels[Math.floor(range.x) % 12];
-                                const end = labels[Math.floor(range.x2 - 1) % 12];
+                                const start = labels[Math.floor(range.x[0]) % 12];
+                                const end = labels[Math.floor(range.x[1] - 1) % 12];
                                 return `${datasetLabel}: ${start} - ${end}`;
                             }
                         }
