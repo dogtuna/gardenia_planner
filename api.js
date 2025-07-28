@@ -56,3 +56,22 @@ export async function lookupZip(zip, zipCache = {}) {
         return null;
     }
 }
+
+export async function fetchTasks(zone, days = 30) {
+    try {
+        const start = new Date();
+        const end = new Date();
+        end.setDate(start.getDate() + days);
+        const startStr = start.toISOString().split('T')[0];
+        const endStr = end.toISOString().split('T')[0];
+        const url = `https://perenual.com/api/gardening-task-planner?hardiness_zone=${zone}&start_date=${startStr}&end_date=${endStr}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Task lookup failed');
+        const json = await res.json();
+        return json.tasks || [];
+    } catch (err) {
+        console.error(err);
+        return [];
+    }
+}
+

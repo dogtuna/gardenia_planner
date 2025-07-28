@@ -10,6 +10,8 @@ This repository contains a single-page web application for planning a fall veget
 The JavaScript is organized into ES modules (`constants.js`, `api.js`, and `app.js`), so keep them together when copying files.
 
 An internet connection is needed because the page loads Tailwind CSS, Chart.js, fonts from public CDNs, and now fetches location details and average frost dates from external APIs when you change your ZIP code. If the APIs are unavailable, the app falls back to approximate first and last frost dates based on your USDA zone.
+The "What to Do Now" section also fetches short-term gardening advice from an external API using your USDA zone, so you may need an API key.
+
 
 ## Prerequisites
 

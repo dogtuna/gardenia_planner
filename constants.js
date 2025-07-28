@@ -42,6 +42,31 @@ export const zoneLastFrostDates = window.zoneLastFrostDates || {
 };
 window.zoneLastFrostDates = zoneLastFrostDates;
 
+export const zoneTasks = window.zoneTasks || {
+    default: {
+        week: [
+            'Water deeply if weather is dry',
+            'Keep weeds under control'
+        ],
+        month: [
+            'Add a layer of compost to beds',
+            'Plan upcoming plantings'
+        ]
+    },
+    '9a': {
+        week: [
+            'Direct sow heat-loving crops',
+            'Start fall tomatoes indoors'
+        ],
+        month: [
+            'Prepare soil with compost',
+            'Install trellises for vines'
+        ]
+    }
+};
+window.zoneTasks = zoneTasks;
+
+
 export const zipData = window.zipData || {
     "77316": {city: "Montgomery", state: "TX", zone: "9a"},
     "10001": {city: "New York", state: "NY", zone: "7b"},

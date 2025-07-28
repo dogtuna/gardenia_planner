@@ -1,5 +1,6 @@
-import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation } from "./constants.js";
-import { lookupFrostDate, lookupZip } from "./api.js";
+import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, zoneTasks } from "./constants.js";
+import { lookupFrostDate, lookupZip, fetchTasks } from "./api.js";
+
 document.addEventListener('DOMContentLoaded', function() {
     
     let plantData = [
@@ -242,6 +243,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const zoneDisplay = document.getElementById('zone-display');
     const firstFrostDisplay = document.getElementById('first-frost-display');
     const lastFrostDisplay = document.getElementById('last-frost-display');
+    const todoHeader = document.getElementById('todo-header');
+    const todoWeek = document.getElementById('todo-week');
+    const todoMonth = document.getElementById('todo-month');
     const totalSpaceDisplay = document.getElementById('total-space-display');
     const bedCountDisplay = document.getElementById('bed-count-display');
     const editLocationBtn = document.getElementById('edit-location-btn');
@@ -320,10 +324,23 @@ document.addEventListener('DOMContentLoaded', function() {
         bedCountDisplay.textContent = `Across ${count} Raised Bed${count === 1 ? '' : 's'}`;
     }
 
+    async function updateTodoUI() {
+        const zone = userLocation.zone;
+        const weekTasks = await fetchTasks(zone, 7);
+        const monthTasks = await fetchTasks(zone, 30);
+        const week = weekTasks.length ? weekTasks.join('; ') : (zoneTasks[zone]?.week || zoneTasks.default.week).join('; ');
+        const month = monthTasks.length ? monthTasks.join('; ') : (zoneTasks[zone]?.month || zoneTasks.default.month).join('; ');
+        const today = new Date();
+        todoHeader.textContent = `What to Do Now (as of ${today.toLocaleDateString()})`;
+        todoWeek.textContent = `In the next week: ${week}`;
+        todoMonth.textContent = `Over the next month: ${month}`;
+    }
+
     loadData();
     currentBedType = Object.keys(bedLayouts)[0] || currentBedType;
     updateLocationUI();
     updateSpaceUI();
+    updateTodoUI();
 
     const viabilityClasses = {
         'Good': 'border-green-accent',
@@ -1224,6 +1241,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (locationInfo) {
             userLocation = { zip, ...locationInfo };
             updateLocationUI();
+            updateTodoUI();
             locationFormModal.style.display = 'none';
             saveData();
         } else {
