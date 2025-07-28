@@ -67,10 +67,43 @@ export async function fetchTasks(zone, days = 30) {
         const url = `https://perenual.com/api/gardening-task-planner?hardiness_zone=${zone}&start_date=${startStr}&end_date=${endStr}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Task lookup failed');
-        const json = await res.json();
-        return json.tasks || [];
+        const text = await res.text();
+        try {
+            const json = JSON.parse(text);
+            return json.tasks || [];
+        } catch (err) {
+            console.error('Invalid JSON from tasks API:', text.slice(0, 80));
+            return [];
+        }
     } catch (err) {
         console.error(err);
         return [];
+    }
+}
+
+export async function fetchOpenFarmWindow(plantName) {
+    try {
+        const searchRes = await fetch(`https://api.openfarm.cc/api/v1/crops/?filter=${encodeURIComponent(plantName)}`);
+        if (!searchRes.ok) throw new Error('OpenFarm crop search failed');
+        const searchJson = await searchRes.json();
+        const first = searchJson.data && searchJson.data[0];
+        if (!first) return null;
+        const slug = (first.attributes && first.attributes.slug) || first.id;
+        const cropRes = await fetch(`https://api.openfarm.cc/api/v1/crops/${slug}`);
+        if (!cropRes.ok) throw new Error('OpenFarm crop fetch failed');
+        const cropJson = await cropRes.json();
+        const attr = cropJson.data && cropJson.data.attributes;
+        const start = attr && (attr.sowing_start_month || attr.sowing_start);
+        const end = attr && (attr.sowing_end_month || attr.sowing_end);
+        if (start && end) {
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const s = typeof start === 'number' ? months[start - 1] : start;
+            const e = typeof end === 'number' ? months[end - 1] : end;
+            return `${s}-${e}`;
+        }
+        return null;
+    } catch (err) {
+        console.error(err);
+        return null;
     }
 }
