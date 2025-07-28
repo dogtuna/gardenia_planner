@@ -262,6 +262,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let actionPlanData = { filter: 'All' };
     let userLocation = { ...defaultLocation };
 
+    const monthMap = {
+        jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+        jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12
+    };
+
+
     function loadData() {
         const storedPlants = localStorage.getItem('plantLibrary');
         if (storedPlants) {
@@ -343,11 +349,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateLocationUI();
     updateSpaceUI();
     updateTodoUI();
-
-    const monthMap = {
-        jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
-        jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12
-    };
 
     const viabilityClasses = {
         'Good': 'border-green-accent',
