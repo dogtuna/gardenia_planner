@@ -1,4 +1,4 @@
-import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, zoneTasks } from "./constants.js";
+import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, zoneTasks, plantingWindows } from "./constants.js";
 import { lookupFrostDate, lookupZip, fetchTasks } from "./api.js";
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -39,6 +39,13 @@ document.addEventListener('DOMContentLoaded', function() {
         { name: 'Chives', viability: 'Plant Later', method: 'Direct Sow', window: 'Early Oct', spacing: 16, maturity: 'N/A (Perennial)', notes: 'Establish for future years.', type: 'Herb', emoji: '🌿', plantingMonth: 10, seedsToStart: '35-45', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep moist.'}, {stage: 'Establishment', days: 'Ongoing', notes: 'Can harvest lightly in first year. Divide clumps every few years.'}], feedingSchedule: [{type: 'Compost tea / Balanced liquid fertilizer', frequency: 'Monthly', stage: 'After establishment'}] },
         { name: 'Warrior Onion', viability: 'Plant Later', method: 'Direct Sow', window: 'Late Aug-Sep', spacing: 16, maturity: '60 (from direct seed)', notes: 'Cool season. Can stand freezing.', type: 'Root', emoji: '🧅', plantingMonth: 8, seedsToStart: '50-60', successionWaves: 2, successionInterval: '3 weeks', growthStages: [{stage: 'Germination', days: '7-14 days', notes: 'Keep moist.'}, {stage: 'Thinning', days: '3-4 weeks', notes: 'Thin to final spacing for larger bulbs/bunches.'}, {stage: 'Harvest (Bunching)', days: '60-70 days', notes: 'Harvest green tops as needed.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer (higher nitrogen)', frequency: 'Every 2-3 weeks', stage: 'After thinning'}] },
         { name: 'Sugar Baby Watermelon', viability: 'Gamble', method: 'Direct Sow', window: 'Jul-Aug', spacing: 1, maturity: '70-80', notes: 'Needs strong trellis and vine management. Frost susceptible.', type: 'Other', emoji: '🍉', plantingMonth: 7, seedsToStart: '3-5', successionWaves: 1, growthStages: [{stage: 'Germination', days: '7-10 days', notes: 'Plant 1 inch deep. Keep moist.'}, {stage: 'Vining', days: '3-4 weeks', notes: 'Train onto trellis immediately. Prune side shoots.'}, {stage: 'First Fruit Set', days: '50-60 days', notes: 'Hand-pollinate if needed. Support developing fruit.'}, {stage: 'Harvest', days: '70-80 days', notes: 'Harvest when ground spot is yellow and tendril is dry.'}], feedingSchedule: [{type: 'Balanced liquid fertilizer', frequency: 'Every 2-3 weeks', stage: 'After true leaves emerge'}, {type: 'Higher potassium fertilizer', frequency: 'Every 1-2 weeks', stage: 'Once flowering begins'}] },
+
+    // Merge planting window data from constants if available
+    plantData = plantData.map(p => ({
+        ...p,
+        window: plantingWindows[p.name] || p.window
+    }));
+
     ];
 
     let bedLayouts = {
@@ -795,9 +802,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function parseWindow(str) {
-            if (typeof str !== 'string' || !str) return [null, null];
+            if (str == null) return [null, null];
+            const s = String(str).trim().toLowerCase();
+            if (!s) return [null, null];
 
-            const matches = str.toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/g);
+            const matches = s.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/g);
             if (!matches) return [null, null];
             const start = monthMap[matches[0]];
             const end = monthMap[matches[matches.length - 1]] || start;
