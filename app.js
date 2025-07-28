@@ -354,27 +354,6 @@ document.addEventListener('DOMContentLoaded', function() {
         firstFrost: zoneFrostDates["9a"]
     };
 
-    const zoneFrostDates = {
-        "3a": "Sep 8 - 15",
-        "3b": "Sep 16 - 23",
-        "4a": "Sep 21 - 30",
-        "4b": "Sep 25 - Oct 5",
-        "5a": "Oct 1 - 10",
-        "5b": "Oct 10 - 20",
-        "6a": "Oct 10 - 20",
-        "6b": "Oct 20 - 30",
-        "7a": "Oct 20 - 30",
-        "7b": "Oct 30 - Nov 10",
-        "8a": "Nov 1 - 10",
-        "8b": "Nov 10 - 20",
-        "9a": "Dec 1 - 10",
-        "9b": "Dec 10 - 20",
-        "10a": "Rare Frost",
-        "10b": "Rare Frost",
-        "11a": "No Frost",
-        "11b": "No Frost"
-    };
-
     async function lookupFrostDate(lat, lon) {
         try {
             const stationRes = await fetch(`https://api.farmsense.net/v1/frostdates/stations/?lat=${lat}&lon=${lon}`);
@@ -648,15 +627,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    const defaultLocation = {
-        zip: "77316",
-        city: "Montgomery",
-        state: "TX",
-        zone: "9a",
-        firstFrost: window.zoneFrostDates["9a"],
-        lastFrost: window.zoneLastFrostDates["9a"]
-
-    };
     let userLocation = {...defaultLocation};
 
     function loadData() {
