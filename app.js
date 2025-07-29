@@ -1,6 +1,7 @@
 import { zipData, defaultLocation, plantingWindows } from "./constants.js";
 import { zoneTasks } from "./tasks.js";
-import { lookupFrostDate, lookupZip, fetchOpenFarmWindow } from "./api.js";
+import { lookupFrostDate, lookupZip, fetchOpenFarmWindow, fetchFrostProbabilities } from "./api.js";
+import { fractionByWeek, renderThermometerGauge } from "./utils.js";
 document.addEventListener('DOMContentLoaded', async function() {
 
     let plantingWindowsCache = {};
@@ -370,11 +371,24 @@ document.addEventListener('DOMContentLoaded', async function() {
         todoMonth.textContent = `Over the next month: ${month}`;
     }
 
+    async function updateFrostGauges() {
+        if (!userLocation.lat || !userLocation.lon) return;
+        const season1 = await fetchFrostProbabilities(userLocation.lat, userLocation.lon, 1);
+        const season2 = await fetchFrostProbabilities(userLocation.lat, userLocation.lon, 2);
+        if (season1 && season2) {
+            const lastWeeks = fractionByWeek(season1, 32);
+            const firstWeeks = fractionByWeek(season2, 32);
+            renderThermometerGauge('last-frost-gauge', lastWeeks);
+            renderThermometerGauge('first-frost-gauge', firstWeeks);
+        }
+    }
+
     loadData();
     currentBedType = Object.keys(bedLayouts)[0] || currentBedType;
     updateLocationUI();
     updateSpaceUI();
     updateTodoUI();
+    updateFrostGauges();
 
     const viabilityClasses = {
         'Good': 'border-green-accent',
@@ -1341,6 +1355,7 @@ if (fetched) {
             userLocation = { zip, ...locationInfo };
             updateLocationUI();
             updateTodoUI();
+            updateFrostGauges();
             locationFormModal.style.display = 'none';
             saveData();
         } else {
