@@ -1,4 +1,4 @@
-import { zoneFrostDates, zoneLastFrostDates, zipData, defaultLocation, plantingWindows } from "./constants.js";
+import { zipData, defaultLocation, plantingWindows } from "./constants.js";
 import { zoneTasks } from "./tasks.js";
 import { lookupFrostDate, lookupZip, fetchOpenFarmWindow } from "./api.js";
 document.addEventListener('DOMContentLoaded', async function() {
@@ -319,12 +319,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const storedLocation = localStorage.getItem('userLocation');
         if (storedLocation) {
             userLocation = JSON.parse(storedLocation);
-            if (!userLocation.firstFrost && window.zoneFrostDates[userLocation.zone]) {
-                userLocation.firstFrost = window.zoneFrostDates[userLocation.zone];
-            }
-            if (!userLocation.lastFrost && window.zoneLastFrostDates[userLocation.zone]) {
-                userLocation.lastFrost = window.zoneLastFrostDates[userLocation.zone];
-            }
         }
         const storedWindows = localStorage.getItem('plantingWindowsCache');
         if (storedWindows) {
@@ -1341,12 +1335,7 @@ if (fetched) {
             locationInfo = { ...zipData[zip] };
         }
 
-        if (locationInfo && !locationInfo.firstFrost && window.zoneFrostDates[locationInfo.zone]) {
-            locationInfo.firstFrost = window.zoneFrostDates[locationInfo.zone];
-        }
-        if (locationInfo && !locationInfo.lastFrost && window.zoneLastFrostDates[locationInfo.zone]) {
-            locationInfo.lastFrost = window.zoneLastFrostDates[locationInfo.zone];
-        }
+
 
         if (locationInfo) {
             userLocation = { zip, ...locationInfo };
