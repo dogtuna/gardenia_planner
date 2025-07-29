@@ -49,11 +49,6 @@ export function fractionByWeek(frostArr, tempThreshold = 32) {
   }));
 }
 
-/**
- * Render a horizontal gauge summarizing frost risk for each week.
- * Adjacent weeks with the same risk level are merged into one segment
- * and labeled with their date range.
- */
 export function renderThermometerGauge(containerId, weekData) {
   const container = document.getElementById(containerId);
   if (!container) return;
