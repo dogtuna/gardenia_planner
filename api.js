@@ -1,4 +1,4 @@
-import { zoneFrostDates, zoneLastFrostDates } from './constants.js';
+// Frost dates will be provided solely by the API; zone-based fallbacks removed.
 
 const FARMSENSE_PROXY =
     'https://thingproxy.freeboard.io/fetch/https://api.farmsense.net/v1/frostdates';
@@ -41,14 +41,8 @@ export async function lookupZip(zip, zipCache = {}) {
         const place = locJson.places && locJson.places[0];
         if (!place) throw new Error('No city found');
 
-        let firstFrost = await lookupFrostDate(place.latitude, place.longitude, 1);
-        let lastFrost = await lookupFrostDate(place.latitude, place.longitude, 2);
-        if (!firstFrost && zoneFrostDates[zoneJson.zone]) {
-            firstFrost = zoneFrostDates[zoneJson.zone];
-        }
-        if (!lastFrost && zoneLastFrostDates[zoneJson.zone]) {
-            lastFrost = zoneLastFrostDates[zoneJson.zone];
-        }
+        const firstFrost = await lookupFrostDate(place.latitude, place.longitude, 1);
+        const lastFrost = await lookupFrostDate(place.latitude, place.longitude, 2);
 
         const data = {
             city: place['place name'],

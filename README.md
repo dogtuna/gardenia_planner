@@ -9,7 +9,7 @@ This repository contains a single-page web application for planning a fall veget
 3. Open the `index.html` file directly in your browser. No build process is required.
 The JavaScript is organized into ES modules (`constants.js`, `tasks.js`, `api.js`, and `app.js`), so keep them together when copying files.
 
-An internet connection is needed because the page loads Tailwind CSS, Chart.js, fonts from public CDNs, and now fetches location details and average frost dates from external APIs when you change your ZIP code. If the APIs are unavailable, the app falls back to approximate first and last frost dates based on your USDA zone.
+An internet connection is needed because the page loads Tailwind CSS, Chart.js, fonts from public CDNs, and now fetches location details and average frost dates from external APIs when you change your ZIP code. If the APIs are unavailable, frost dates will simply be unavailable until the lookup succeeds.
 The "What to Do Now" section uses a built-in dataset of weekly and monthly tasks for each USDA zone, so no external API key is required.
 The planting timeline automatically starts with the current month and highlights each crop's planting and harvest windows based on your zone. When a plant doesn't have a predefined window in `constants.js`, the page now queries the OpenFarm API to fetch one on demand.
 
