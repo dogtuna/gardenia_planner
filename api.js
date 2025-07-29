@@ -1,8 +1,8 @@
 const FARMSENSE_BASE = 'https://api.farmsense.net/v1/frostdates';
 const CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
 
-export async function lookupFrostDate(lat, lon, season = 1) {
-  // 1) Find the nearest station (if _this_ fails, we _can’t_ proceed at all)
+export async function fetchFrostProbabilities(lat, lon, season = 1) {
+  // 1) Find the nearest station
   const stationsUrl = `${FARMSENSE_BASE}/stations/?lat=${lat}&lon=${lon}`;
   let stations;
   try {
@@ -10,33 +10,32 @@ export async function lookupFrostDate(lat, lon, season = 1) {
     if (!res.ok) throw new Error(`Station lookup failed: ${res.status}`);
     stations = await res.json();
   } catch (err) {
-    console.error('lookupFrostDate › station error:', err);
-    // No station → we can’t do anything
+    console.error('fetchFrostProbabilities › station error:', err);
     return null;
   }
 
   if (!Array.isArray(stations) || stations.length === 0) {
-    console.warn('lookupFrostDate › no stations returned');
+    console.warn('fetchFrostProbabilities › no stations returned');
     return null;
   }
   const stationId = stations[0].id;
 
-  // 2) Get the frost probabilities (if _this_ fails, we'll just return null)
+  // 2) Get the frost probabilities
   const probsUrl = `${FARMSENSE_BASE}/probabilities/?station=${stationId}&season=${season}`;
-  let frost;
   try {
     const res = await fetch(CORS_PROXY + encodeURIComponent(probsUrl));
     if (!res.ok) throw new Error(`Probabilities lookup failed: ${res.status}`);
-    frost = await res.json();
+    const frost = await res.json();
+    return frost;
   } catch (err) {
-    console.error('lookupFrostDate › probabilities error:', err);
+    console.error('fetchFrostProbabilities › probabilities error:', err);
     return null;
   }
+}
 
-  if (!Array.isArray(frost) || frost.length === 0) {
-    console.warn('lookupFrostDate › empty frost array');
-    return null;
-  }
+export async function lookupFrostDate(lat, lon, season = 1) {
+  const frost = await fetchFrostProbabilities(lat, lon, season);
+  if (!Array.isArray(frost) || frost.length === 0) return null;
 
   const info = frost[0];
   // prefer the 50% median date, then 70, then 90, then any `date` field
