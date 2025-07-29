@@ -1,46 +1,6 @@
-export const zoneFrostDates = window.zoneFrostDates || {
-    "3a": "Sep 8 - 15",
-    "3b": "Sep 16 - 23",
-    "4a": "Sep 21 - 30",
-    "4b": "Sep 25 - Oct 5",
-    "5a": "Oct 1 - 10",
-    "5b": "Oct 10 - 20",
-    "6a": "Oct 10 - 20",
-    "6b": "Oct 20 - 30",
-    "7a": "Oct 20 - 30",
-    "7b": "Oct 30 - Nov 10",
-    "8a": "Nov 1 - 10",
-    "8b": "Nov 10 - 20",
-    "9a": "Dec 1 - 10",
-    "9b": "Dec 10 - 20",
-    "10a": "Rare Frost",
-    "10b": "Rare Frost",
-    "11a": "No Frost",
-    "11b": "No Frost"
-};
-window.zoneFrostDates = zoneFrostDates;
-
-export const zoneLastFrostDates = window.zoneLastFrostDates || {
-    "3a": "May 21 - Jun 10",
-    "3b": "May 11 - May 30",
-    "4a": "May 1 - May 20",
-    "4b": "Apr 21 - May 10",
-    "5a": "Apr 11 - Apr 30",
-    "5b": "Apr 1 - Apr 20",
-    "6a": "Mar 20 - Apr 10",
-    "6b": "Mar 10 - Mar 30",
-    "7a": "Mar 1 - Mar 20",
-    "7b": "Feb 20 - Mar 10",
-    "8a": "Feb 10 - Feb 25",
-    "8b": "Feb 1 - Feb 20",
-    "9a": "Jan 15 - Feb 1",
-    "9b": "Jan 1 - Jan 20",
-    "10a": "Rare Frost",
-    "10b": "Rare Frost",
-    "11a": "No Frost",
-    "11b": "No Frost"
-};
-window.zoneLastFrostDates = zoneLastFrostDates;
+// Historical frost date estimates were previously stored in zoneFrostDates and
+// zoneLastFrostDates. These fallbacks have been removed so the app relies
+// entirely on live data from the frost date API.
 
 
 export const zipData = window.zipData || {
@@ -68,8 +28,9 @@ export const defaultLocation = window.defaultLocation || {
     city: "Montgomery",
     state: "TX",
     zone: "9a",
-    firstFrost: zoneFrostDates["9a"],
-    lastFrost: zoneLastFrostDates["9a"]
+    // Frost dates will be fetched from the API on load
+    firstFrost: null,
+    lastFrost: null
 };
 window.defaultLocation = defaultLocation;
 
