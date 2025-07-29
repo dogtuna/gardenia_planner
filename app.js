@@ -1324,11 +1324,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Always attempt a lookup if we have no cached frost dates
         if (!locationInfo || !locationInfo.firstFrost || !locationInfo.lastFrost) {
             const fetched = await lookupZip(zip, zipData);
-
-            if (fetched) {
-                locationInfo = fetched;
-                zipData[zip] = fetched; // cache for session
-            }
+if (fetched) {
+  // assume API returns { first_frost, last_frost, ... }
+  const { first_frost, last_frost, ...rest } = fetched;
+  locationInfo = {
+    ...rest,
+    firstFrost: first_frost,
+    lastFrost: last_frost,
+  };
+  zipData[zip] = { ...fetched, firstFrost: first_frost, lastFrost: last_frost };
+}
         }
 
         if (!locationInfo && zipData[zip]) {
