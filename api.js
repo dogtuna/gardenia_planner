@@ -1,50 +1,45 @@
-// Frost dates will be provided solely by the API; zone-based fallbacks removed.
-
-const FARMSENSE_PROXY =
-    'https://thingproxy.freeboard.io/fetch/https://api.farmsense.net/v1/frostdates';
+const FARMSENSE_BASE = 'https://api.farmsense.net/v1/frostdates';
+const CORS_PROXY    = 'https://api.allorigins.win/raw?url=';
 
 export async function lookupFrostDate(lat, lon, season = 1) {
-    try {
-        const stationRes = await fetch(
-            `${FARMSENSE_PROXY}/stations/?lat=${lat}&lon=${lon}`
-        );
-        if (!stationRes.ok) throw new Error('Station lookup failed');
-        const stations = await stationRes.json();
-        if (!Array.isArray(stations) || stations.length === 0)
-            throw new Error('No station');
-        const station = stations[0].id;
+  try {
+    // 1) find nearest station
+    const stationsUrl = `${FARMSENSE_BASE}/stations/?lat=${lat}&lon=${lon}`;
+    const stationRes  = await fetch(
+      CORS_PROXY + encodeURIComponent(stationsUrl)
+    );
+    if (!stationRes.ok) throw new Error(`Station lookup failed (${stationRes.status})`);
+    const stations = await stationRes.json();
+    if (!Array.isArray(stations) || stations.length === 0) 
+      throw new Error('No station returned');
 
-        const frostRes = await fetch(
-            `${FARMSENSE_PROXY}/probabilities/?station=${station}&season=${season}`
-        );
-        if (!frostRes.ok) throw new Error('Frost lookup failed');
-        const frostJson = await frostRes.json();
-        const info = frostJson && frostJson[0];
-        const value =
-            info && (info.prob_50 || info.prob_70 || info.prob_90 || info.date);
-        if (!value || value === '0000') return null;
-        const month = parseInt(value.slice(0, 2), 10);
-        const day = parseInt(value.slice(2), 10);
-        if (!month || !day) return null;
-        const months = [
-            'Jan',
-            'Feb',
-            'Mar',
-            'Apr',
-            'May',
-            'Jun',
-            'Jul',
-            'Aug',
-            'Sep',
-            'Oct',
-            'Nov',
-            'Dec'
-        ];
-        return `${months[month - 1]} ${day}`;
-    } catch (err) {
-        console.error(err);
-        return null;
-    }
+    const stationId = stations[0].id;
+
+    // 2) get frost probabilities
+    const probsUrl = `${FARMSENSE_BASE}/probabilities/?station=${stationId}&season=${season}`;
+    const frostRes = await fetch(
+      CORS_PROXY + encodeURIComponent(probsUrl)
+    );
+    if (!frostRes.ok) throw new Error(`Frost lookup failed (${frostRes.status})`);
+    const frostJson = await frostRes.json();
+    if (!Array.isArray(frostJson) || frostJson.length === 0) 
+      return null;
+
+    const info = frostJson[0];
+    // pick whichever date field is present
+    const raw = info.prob_50 || info.prob_70 || info.prob_90 || info.date;
+    if (!raw || raw === '0000') return null;
+
+    const month = parseInt(raw.slice(0, 2), 10);
+    const day   = parseInt(raw.slice(2),   10);
+    if (!month || !day) return null;
+
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[month - 1]} ${day}`;
+  } catch (err) {
+    console.error('lookupFrostDate error:', err);
+    return null;
+  }
 }
 
 export async function lookupZip(zip, zipCache = {}) {
