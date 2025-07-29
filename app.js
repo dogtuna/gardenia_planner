@@ -375,13 +375,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!userLocation.lat || !userLocation.lon) return;
         // season=1 → spring (last frost), season=2 → fall (first frost)
         const lastSeason = await fetchFrostProbabilities(
-
             userLocation.lat,
             userLocation.lon,
             1
         );
         const firstSeason = await fetchFrostProbabilities(
-
             userLocation.lat,
             userLocation.lon,
             2

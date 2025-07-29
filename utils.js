@@ -20,7 +20,7 @@ export function fractionByWeek(frostArr, tempThreshold = 32) {
   const pts = pairs.map(({pct, dateStr}) => {
     const m = +dateStr.slice(0,2) - 1, d = +dateStr.slice(2);
     return { pct, date: new Date(year, m, d) };
-  });
+  }).sort((a, b) => a.date - b.date);
 
   // 4) build week-start dates from first→last
   const start = pts[0].date, end = pts[pts.length-1].date;
