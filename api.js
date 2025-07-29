@@ -8,20 +8,39 @@ export async function lookupFrostDate(lat, lon, season = 1) {
         const stationRes = await fetch(
             `${FARMSENSE_PROXY}/stations/?lat=${lat}&lon=${lon}`
         );
-
         if (!stationRes.ok) throw new Error('Station lookup failed');
         const stations = await stationRes.json();
-        if (!Array.isArray(stations) || stations.length === 0) throw new Error('No station');
+        if (!Array.isArray(stations) || stations.length === 0)
+            throw new Error('No station');
         const station = stations[0].id;
 
         const frostRes = await fetch(
             `${FARMSENSE_PROXY}/probabilities/?station=${station}&season=${season}`
         );
-
         if (!frostRes.ok) throw new Error('Frost lookup failed');
         const frostJson = await frostRes.json();
-        const info = frostJson[0];
-        return info && (info.prob_50 || info.prob_70 || info.prob_90 || info.date);
+        const info = frostJson && frostJson[0];
+        const value =
+            info && (info.prob_50 || info.prob_70 || info.prob_90 || info.date);
+        if (!value || value === '0000') return null;
+        const month = parseInt(value.slice(0, 2), 10);
+        const day = parseInt(value.slice(2), 10);
+        if (!month || !day) return null;
+        const months = [
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'May',
+            'Jun',
+            'Jul',
+            'Aug',
+            'Sep',
+            'Oct',
+            'Nov',
+            'Dec'
+        ];
+        return `${months[month - 1]} ${day}`;
     } catch (err) {
         console.error(err);
         return null;
