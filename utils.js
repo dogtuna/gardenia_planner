@@ -54,6 +54,7 @@ export function fractionByWeek(frostArr, tempThreshold = 32) {
  * Adjacent weeks with the same risk level are merged into one segment
  * and labeled with their date range.
  */
+
 export function renderThermometerGauge(containerId, weekData) {
   const container = document.getElementById(containerId);
   if (!container) return;
