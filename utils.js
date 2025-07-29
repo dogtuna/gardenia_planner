@@ -49,23 +49,46 @@ export function fractionByWeek(frostArr, tempThreshold = 32) {
   }));
 }
 
-/**
- * Render a vertical "thermometer" into containerId,
- * coloring each week-slice by its frost-risk:
- *  ≤30% → green, 30–50% → yellow, >50% → red.
- */
 export function renderThermometerGauge(containerId, weekData) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
 
-  weekData.forEach(({weekLabel, prob}) => {
+  function colorInfo(prob) {
+    if (prob <= 0.30) return { color: '#5BE12C', label: '≤30%' };
+    if (prob <= 0.50) return { color: '#F5CD19', label: '30–50%' };
+    return { color: '#EA4228', label: '>50%' };
+  }
+
+  // group consecutive weeks with the same color
+  const ranges = [];
+  let start = 0;
+  for (let i = 1; i <= weekData.length; i++) {
+    const prevInfo = colorInfo(weekData[start].prob);
+    const currInfo = i < weekData.length ? colorInfo(weekData[i].prob) : null;
+    if (!currInfo || currInfo.color !== prevInfo.color) {
+      ranges.push({
+        color: prevInfo.color,
+        label: prevInfo.label,
+        startLabel: weekData[start].weekLabel,
+        endLabel: weekData[i - 1].weekLabel,
+        startProb: weekData[start].prob,
+        endProb: weekData[i - 1].prob,
+        len: i - start,
+      });
+      start = i;
+    }
+  }
+
+  ranges.forEach(r => {
     const seg = document.createElement('div');
     seg.className = 'segment';
-    if (prob <= 0.30)      seg.style.background = '#5BE12C';
-    else if (prob <= 0.50) seg.style.background = '#F5CD19';
-    else                   seg.style.background = '#EA4228';
-    seg.title = `${weekLabel}: ${(prob*100).toFixed(0)}% frost chance`;
+    seg.style.background = r.color;
+    seg.style.flex = r.len;
+    seg.title = `${r.startLabel}–${r.endLabel}: ${r.label}`;
+    const span = document.createElement('span');
+    span.textContent = `${r.startLabel} - ${r.endLabel}`;
+    seg.appendChild(span);
     container.appendChild(seg);
   });
 }
