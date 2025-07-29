@@ -373,13 +373,22 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function updateFrostGauges() {
         if (!userLocation.lat || !userLocation.lon) return;
-        const season1 = await fetchFrostProbabilities(userLocation.lat, userLocation.lon, 1);
-        const season2 = await fetchFrostProbabilities(userLocation.lat, userLocation.lon, 2);
-        if (season1 && season2) {
-            const lastWeeks = fractionByWeek(season1, 32);
-            const firstWeeks = fractionByWeek(season2, 32);
-            renderThermometerGauge('last-frost-gauge', lastWeeks);
+        // season=1 → fall (first frost), season=2 → spring (last frost)
+        const firstSeason = await fetchFrostProbabilities(
+            userLocation.lat,
+            userLocation.lon,
+            1
+        );
+        const lastSeason = await fetchFrostProbabilities(
+            userLocation.lat,
+            userLocation.lon,
+            2
+        );
+        if (firstSeason && lastSeason) {
+            const firstWeeks = fractionByWeek(firstSeason, 32);
+            const lastWeeks = fractionByWeek(lastSeason, 32);
             renderThermometerGauge('first-frost-gauge', firstWeeks);
+            renderThermometerGauge('last-frost-gauge', lastWeeks);
         }
     }
 
