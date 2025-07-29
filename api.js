@@ -1,5 +1,5 @@
 const FARMSENSE_BASE = 'https://api.farmsense.net/v1/frostdates';
-const CORS_PROXY    = 'https://api.allorigins.win/raw?url=';
+const CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
 
 export async function lookupFrostDate(lat, lon, season = 1) {
   // 1) Find the nearest station (if _this_ fails, we _can’t_ proceed at all)
