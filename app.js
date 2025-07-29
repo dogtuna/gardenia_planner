@@ -373,13 +373,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function updateFrostGauges() {
         if (!userLocation.lat || !userLocation.lon) return;
-        // season=1 → fall (first frost), season=2 → spring (last frost)
-        const firstSeason = await fetchFrostProbabilities(
+        // season=1 → spring (last frost), season=2 → fall (first frost)
+        const lastSeason = await fetchFrostProbabilities(
+
             userLocation.lat,
             userLocation.lon,
             1
         );
-        const lastSeason = await fetchFrostProbabilities(
+        const firstSeason = await fetchFrostProbabilities(
+
             userLocation.lat,
             userLocation.lon,
             2
